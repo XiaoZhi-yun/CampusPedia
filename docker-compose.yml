@@ -1,11 +1,11 @@
 services:
   pgvector:
     image: pgvector/pgvector:pg16
-    container_name: campus-rag-pgvector
+    container_name: campus-pedia-pgvector
     environment:
       POSTGRES_USER: campus
       POSTGRES_PASSWORD: campus
-      POSTGRES_DB: campus_rag
+      POSTGRES_DB: campus_pedia
     ports:
       - "5432:5432"
     volumes:

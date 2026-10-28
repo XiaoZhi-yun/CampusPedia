@@ -21,7 +21,7 @@
 ## 目录结构
 
 ```
-campus-rag-qa/
+CampusPedia/
 ├── backend/    # Spring Boot 3 后端
 ├── frontend/   # React + Vite 前端
 ├── corpus/     # 教务语料（公开制度文档）
