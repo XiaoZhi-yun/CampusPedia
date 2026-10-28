@@ -1,0 +1,30 @@
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vite
+node_modules/
+frontend/dist/
+dist/
+*.tsbuildinfo
+
+# 环境变量与密钥（禁止提交）
+.env
+.env.local
+*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
