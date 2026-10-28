@@ -1,6 +1,10 @@
 spring:
   application:
     name: campus-pedia
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
 
 server:
   port: 8080
@@ -14,5 +18,6 @@ campus-pedia:
   embedding:
     dashscope-api-key: ${DASHSCOPE_API_KEY:}
     model: text-embedding-v3
+    provider: hash
   vector-store:
     type: ${VECTOR_STORE_TYPE:memory}

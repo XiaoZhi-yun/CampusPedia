@@ -28,3 +28,6 @@ Thumbs.db
 
 # 日志
 *.log
+
+# 构建产物
+*.merkle-snapshot.json
