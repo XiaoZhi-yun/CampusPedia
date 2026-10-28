@@ -1,12 +1,12 @@
 spring:
   application:
-    name: campus-rag-qa
+    name: campus-pedia
 
 server:
   port: 8080
 
 # API 密钥通过环境变量注入（见 .env.example），不写死、不进仓库
-campus-rag:
+campus-pedia:
   llm:
     deepseek-api-key: ${DEEPSEEK_API_KEY:}
     deepseek-base-url: https://api.deepseek.com

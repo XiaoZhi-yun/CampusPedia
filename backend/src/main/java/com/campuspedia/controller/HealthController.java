@@ -1,4 +1,4 @@
-package com.campusrag.controller;
+package com.campuspedia.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +12,6 @@ public class HealthController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
-        return Map.of("status", "ok", "service", "campus-rag-qa");
+        return Map.of("status", "ok", "service", "campus-pedia");
     }
 }
