@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: campus-rag-qa
+
+server:
+  port: 8080
+
+# API 密钥通过环境变量注入（见 .env.example），不写死、不进仓库
+campus-rag:
+  llm:
+    deepseek-api-key: ${DEEPSEEK_API_KEY:}
+    deepseek-base-url: https://api.deepseek.com
+    model: deepseek-chat
+  embedding:
+    dashscope-api-key: ${DASHSCOPE_API_KEY:}
+    model: text-embedding-v3
+  vector-store:
+    type: ${VECTOR_STORE_TYPE:memory}
