@@ -75,4 +75,10 @@ public class DocumentController {
     public Map<String, Object> chunkCount() {
         return Map.of("totalChunks", documentService.chunkCount());
     }
+
+    /** 向量化诊断：维度可区分 hash(128) / dashscope(1024)。 */
+    @GetMapping("/embedding-info")
+    public Map<String, Object> embeddingInfo() {
+        return Map.of("embeddingDimension", documentService.embeddingDimension());
+    }
 }

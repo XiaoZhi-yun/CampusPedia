@@ -88,6 +88,11 @@ public class DocumentService {
         return vectorStore.count();
     }
 
+    /** 返回当前向量化服务维度（诊断用：hash=128 / dashscope=1024）。 */
+    public int embeddingDimension() {
+        return embedding.dimension();
+    }
+
     /**
      * 按扩展名提取纯文本。
      *
