@@ -102,6 +102,7 @@ async function send(q?: string) {
         const m = messages.value[aiIdx]
         if (ev.type === 'sources') m.sources = ev.data || []
         else if (ev.type === 'trace') m.trace = ev.data
+        else if (ev.type === 'error') { m.content = '出错了：' + (ev.data || ''); m.html = md.render(m.content) }
         else if (ev.type === 'delta') {
           m.content += (ev.data || '')
           m.html = md.render(m.content)

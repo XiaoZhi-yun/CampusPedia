@@ -4,6 +4,8 @@ import com.campuspedia.entity.ChatMessage;
 import com.campuspedia.mapper.ChatMessageMapper;
 import com.campuspedia.service.ConfigService;
 import com.campuspedia.service.LlmService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -17,6 +19,8 @@ import java.util.Map;
 
 @Component
 public class RagChain {
+
+    private static final Logger log = LoggerFactory.getLogger(RagChain.class);
 
     private final QueryRewriter queryRewriter;
     private final HybridRetriever hybridRetriever;
@@ -52,7 +56,12 @@ public class RagChain {
             List<RetrievedChunk> candidates = hybridRetriever.retrieve(rewriteQuery, topKRecall, hybridEnabled);
             List<RetrievedChunk> finalHits;
             if (rerankEnabled && candidates.size() > topNFinal) {
-                finalHits = rerank(candidates, question, topNFinal);
+                try {
+                    finalHits = rerank(candidates, question, topNFinal);
+                } catch (Exception e) {
+                    log.warn("Rerank 失败，降级为混合检索：{}", e.getMessage());
+                    finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
+                }
             } else {
                 finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
             }
