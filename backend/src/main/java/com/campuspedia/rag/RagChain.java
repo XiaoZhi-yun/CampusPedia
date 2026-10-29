@@ -1,7 +1,9 @@
 package com.campuspedia.rag;
 
 import com.campuspedia.entity.ChatMessage;
+import com.campuspedia.entity.ChatSession;
 import com.campuspedia.mapper.ChatMessageMapper;
+import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.service.ConfigService;
 import com.campuspedia.service.LlmService;
 import org.slf4j.Logger;
@@ -33,16 +35,18 @@ public class RagChain {
     private final LlmService llmService;
     private final ConfigService configService;
     private final ChatMessageMapper messageMapper;
+    private final ChatSessionMapper sessionMapper;
 
     public RagChain(QueryRewriter queryRewriter, HybridRetriever hybridRetriever,
                     RerankService rerankService, LlmService llmService,
-                    ConfigService configService, ChatMessageMapper messageMapper) {
+                    ConfigService configService, ChatMessageMapper messageMapper, ChatSessionMapper sessionMapper) {
         this.queryRewriter = queryRewriter;
         this.hybridRetriever = hybridRetriever;
         this.rerankService = rerankService;
         this.llmService = llmService;
         this.configService = configService;
         this.messageMapper = messageMapper;
+        this.sessionMapper = sessionMapper;
     }
 
     public void stream(String question, List<String> history, Long sessionId, Long userId, SseEmitter emitter) {
@@ -161,6 +165,17 @@ public class RagChain {
 
     private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
         if (userId == null) return; // 游客：临时会话，不落库
+        // 会话标题：首条消息用问题内容替换默认"新对话"
+        if (sessionId != null) {
+            try {
+                ChatSession session = sessionMapper.selectById(sessionId);
+                if (session != null && (session.getTitle() == null || session.getTitle().isBlank() || "新对话".equals(session.getTitle()))) {
+                    String t = question == null ? "" : question.trim();
+                    session.setTitle(t.length() > 20 ? t.substring(0, 20) : t);
+                    sessionMapper.updateById(session);
+                }
+            } catch (Exception ignore) {}
+        }
         try {
             ChatMessage m = new ChatMessage();
             m.setSessionId(sessionId == null ? 0L : sessionId);
