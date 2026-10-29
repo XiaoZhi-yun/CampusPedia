@@ -40,7 +40,7 @@ async function login() {
     const res = await request.post('/auth/login', { username: username.value, password: password.value }) as any
     if (res.code === 200) {
       auth.setLogin(res.data.token, res.data.username, res.data.role)
-      router.push('/')
+      router.push(res.data.role === 'admin' ? '/admin' : '/')
     } else {
       msg.value = res.msg || '登录失败'
     }
@@ -59,7 +59,7 @@ async function register() {
     const res = await request.post('/auth/register', { username: username.value, password: password.value }) as any
     if (res.code === 200) {
       auth.setLogin(res.data.token, res.data.username, res.data.role)
-      router.push('/')
+      router.push(res.data.role === 'admin' ? '/admin' : '/')
     } else {
       msg.value = res.msg || '注册失败'
     }

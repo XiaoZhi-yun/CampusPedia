@@ -1,6 +1,8 @@
 package com.campuspedia.controller;
 
 import com.campuspedia.rag.RagChain;
+import com.campuspedia.security.AuthHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,16 +17,18 @@ import java.util.concurrent.CompletableFuture;
 public class ChatController {
 
     private final RagChain ragChain;
+    private final AuthHelper authHelper;
 
-    public ChatController(RagChain ragChain) {
+    public ChatController(RagChain ragChain, AuthHelper authHelper) {
         this.ragChain = ragChain;
+        this.authHelper = authHelper;
     }
 
     @PostMapping("/chat/stream")
-    public SseEmitter stream(@RequestBody Map<String, Object> body) {
+    public SseEmitter stream(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         String question = String.valueOf(body.getOrDefault("question", ""));
         Long sessionId = body.get("sessionId") == null ? null : Long.valueOf(String.valueOf(body.get("sessionId")));
-        Long userId = body.get("userId") == null ? null : Long.valueOf(String.valueOf(body.get("userId")));
+        Long userId = authHelper.currentUserId(request);
         SseEmitter emitter = new SseEmitter(120_000L);
         CompletableFuture.runAsync(() -> ragChain.stream(question, sessionId, userId, emitter));
         return emitter;

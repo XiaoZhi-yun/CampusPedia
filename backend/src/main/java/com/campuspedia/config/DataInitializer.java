@@ -1,6 +1,9 @@
 package com.campuspedia.config;
 
+import com.campuspedia.entity.KbDocument;
+import com.campuspedia.mapper.KbDocumentMapper;
 import com.campuspedia.service.KnowledgeService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,12 +21,14 @@ public class DataInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
     private final KnowledgeService knowledgeService;
+    private final KbDocumentMapper documentMapper;
 
     @Value("${campus.corpus.path:../corpus/example}")
     private String corpusPath;
 
-    public DataInitializer(KnowledgeService knowledgeService) {
+    public DataInitializer(KnowledgeService knowledgeService, KbDocumentMapper documentMapper) {
         this.knowledgeService = knowledgeService;
+        this.documentMapper = documentMapper;
     }
 
     @Override
@@ -35,6 +40,8 @@ public class DataInitializer implements ApplicationRunner {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.md")) {
                 for (Path p : stream) {
                     String fileName = p.getFileName().toString();
+                    Long exists = documentMapper.selectCount(new QueryWrapper<KbDocument>().eq("file_name", fileName));
+                    if (exists != null && exists > 0) continue; // 已加载，幂等跳过
                     knowledgeService.upload(fileName, Files.readAllBytes(p), 0L, null);
                     count++;
                 }

@@ -149,6 +149,7 @@ public class RagChain {
     }
 
     private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
+        if (userId == null) return; // 游客：临时会话，不落库
         try {
             ChatMessage m = new ChatMessage();
             m.setSessionId(sessionId == null ? 0L : sessionId);

@@ -3,12 +3,18 @@
     <header class="topbar">
       <div class="brand">学事通 <span class="en">CampusPedia</span></div>
       <div class="actions">
-        <el-button text @click="$router.push('/admin')">管理后台</el-button>
-        <span class="user">{{ auth.username }}</span>
-        <el-button text @click="logout">退出</el-button>
+        <template v-if="auth.token">
+          <el-button v-if="auth.role === 'admin'" text @click="$router.push('/admin')">管理后台</el-button>
+          <span class="user">{{ auth.username }}</span>
+          <el-button text @click="logout">退出</el-button>
+        </template>
+        <template v-else>
+          <el-button text @click="$router.push('/login')">登录 / 注册</el-button>
+        </template>
       </div>
     </header>
 
+    <div v-if="!auth.token" class="guest-banner">👋 游客模式：聊天不保存记录 · 登录后保存历史、管理员可进后台</div>
     <div class="msg-list" ref="listRef">
       <div v-if="messages.length === 0" class="hint">
         <p>试试问我：</p>
@@ -149,6 +155,7 @@ function scrollBottom() {
 .brand .en { font-size: 12px; color: #999; font-weight: normal; }
 .actions { display: flex; align-items: center; gap: 8px; }
 .user { font-size: 13px; color: #666; }
+.guest-banner { background: #fff7e6; color: #ad6800; font-size: 12px; text-align: center; padding: 6px; border-bottom: 1px solid #ffe7ba; }
 .msg-list { flex: 1; overflow-y: auto; padding: 20px; }
 .hint { color: #999; text-align: center; margin-top: 40px; }
 .msg { display: flex; gap: 10px; margin-bottom: 16px; }
