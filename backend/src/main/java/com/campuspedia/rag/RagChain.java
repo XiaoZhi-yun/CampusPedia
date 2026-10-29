@@ -104,7 +104,7 @@ public class RagChain {
             emit(emitter, "done", null);
             emitter.complete();
 
-            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
+            saveMessage(null, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
             emit(emitter, "error", e.getMessage());
             emitter.complete();
