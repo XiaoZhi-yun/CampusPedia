@@ -9,6 +9,8 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +32,10 @@ public class DocumentLoader {
         if (lower.endsWith(".docx")) {
             return extractDocx(bytes);
         }
-        throw new BizException("不支持的格式：" + fileName + "（支持 md/txt/pdf/docx）");
+        if (lower.endsWith(".doc")) {
+            return extractDoc(bytes);
+        }
+        throw new BizException("不支持的格式：" + fileName + "（支持 md/txt/pdf/doc/docx）");
     }
 
     private String decodeText(byte[] bytes) {
@@ -54,6 +59,18 @@ public class DocumentLoader {
             throw e;
         } catch (Exception e) {
             throw new BizException("PDF 解析失败：" + e.getMessage());
+        }
+    }
+
+    private String extractDoc(byte[] bytes) {
+        try (HWPFDocument doc = new HWPFDocument(new ByteArrayInputStream(bytes))) {
+            String text = new WordExtractor(doc).getText();
+            if (text.isBlank()) throw new BizException("DOC 无文本");
+            return text;
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BizException("DOC 解析失败（建议转存为 docx）：" + e.getMessage());
         }
     }
 

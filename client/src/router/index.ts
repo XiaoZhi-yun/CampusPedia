@@ -13,7 +13,11 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-  if (to.path.startsWith('/admin') && !token) return '/login'
+  const role = localStorage.getItem('role')
+  if (to.path.startsWith('/admin')) {
+    if (!token) return '/login'
+    if (role !== 'admin') return '/'
+  }
   return true
 })
 
