@@ -29,9 +29,10 @@ public class ChatController {
     @PostMapping("/chat/stream")
     public SseEmitter stream(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         String question = String.valueOf(body.getOrDefault("question", ""));
+        Long sessionId = body.get("sessionId") == null ? null : Long.valueOf(String.valueOf(body.get("sessionId")));
         Long userId = authHelper.currentUserId(request);
         SseEmitter emitter = new SseEmitter(120_000L);
-        CompletableFuture.runAsync(() -> ragChain.stream(question, parseHistory(body.get("history")), userId, emitter));
+        CompletableFuture.runAsync(() -> ragChain.stream(question, parseHistory(body.get("history")), sessionId, userId, emitter));
         return emitter;
     }
 
