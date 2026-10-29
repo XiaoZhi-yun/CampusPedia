@@ -26,20 +26,25 @@
           </div>
 
           <el-collapse v-if="m.trace" class="trace">
-            <el-collapse-item title="思考过程" name="1">
-              <p>改写后 query：{{ m.trace.rewriteQuery }}</p>
-              <p>候选条数：{{ m.trace.candidateCount }}，Rerank：{{ m.trace.rerankEnabled }}</p>
-              <pre class="prompt">{{ m.trace.userPrompt }}</pre>
+            <el-collapse-item title="🔍 思考过程" name="1">
+              <div class="trace-body">
+                <div class="trace-row"><span class="label">改写 query</span><span>{{ m.trace.rewriteQuery }}</span></div>
+                <div class="trace-row"><span class="label">检索</span><span>候选 {{ m.trace.candidateCount }} 条 · 混合检索 {{ m.trace.hybridEnabled ? "开" : "关" }} · Rerank {{ m.trace.rerankEnabled ? "开" : "关" }}</span></div>
+                <div class="trace-row block"><span class="label">组装 Prompt</span><pre class="prompt">{{ m.trace.userPrompt }}</pre></div>
+              </div>
             </el-collapse-item>
           </el-collapse>
 
           <div v-if="m.sources && m.sources.length" class="sources">
+            <div class="src-title">📎 参考来源</div>
             <div v-for="s in m.sources" :key="s.index" class="src">
-              <b>[来源{{ s.index }}]</b>
-              <a v-if="s.sourceUrl" :href="s.sourceUrl" target="_blank">《{{ s.fileName }}》</a>
-              <span v-else>《{{ s.fileName }}》</span>
-              <span class="clause">{{ s.clauseRef }}</span>
-              <span class="score">相似度 {{ s.score }}</span>
+              <div class="src-head">
+                <span class="src-no">[{{ s.index }}]</span>
+                <a v-if="s.sourceUrl" :href="s.sourceUrl" target="_blank">《{{ s.fileName }}》</a>
+                <span v-else class="src-name">《{{ s.fileName }}》</span>
+                <span v-if="s.clauseRef" class="clause">{{ s.clauseRef }}</span>
+              </div>
+              <div class="src-snippet">{{ s.snippet }}</div>
             </div>
           </div>
         </div>
@@ -153,12 +158,20 @@ function scrollBottom() {
 .body { max-width: 78%; }
 .bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f0f0f0; }
 .msg.user .bubble { background: #4f46e5; color: #fff; border: none; }
-.trace { margin-top: 8px; }
-.prompt { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
-.sources { margin-top: 8px; font-size: 12px; color: #666; }
-.src { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 4px 8px; margin-top: 4px; }
-.src a { color: #4338ca; text-decoration: none; }
-.src .clause { margin-left: 4px; color: #666; }
-.src .score { margin-left: 8px; color: #999; }
+.trace { margin-top: 8px; background: #f7f8fa; border-radius: 8px; border: 1px solid #f0f0f0; }
+.trace-body { padding: 2px 4px; font-size: 12px; color: #555; }
+.trace-row { display: flex; gap: 8px; margin: 6px 0; align-items: baseline; }
+.trace-row .label { color: #999; flex-shrink: 0; min-width: 68px; }
+.trace-row.block { flex-direction: column; align-items: stretch; }
+.prompt { background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; line-height: 1.6; margin: 4px 0 0; }
+.sources { margin-top: 10px; }
+.src-title { font-size: 12px; color: #999; margin-bottom: 6px; }
+.src { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+.src-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+.src-no { color: #4f46e5; font-weight: 700; }
+.src a { color: #4f46e5; text-decoration: none; font-weight: 500; }
+.src-name { font-weight: 500; }
+.src .clause { color: #888; font-size: 12px; }
+.src-snippet { margin-top: 6px; font-size: 12px; color: #666; line-height: 1.6; border-left: 2px solid #e5e7eb; padding-left: 8px; }
 .input-bar { display: flex; gap: 8px; padding: 12px 20px; background: #fff; border-top: 1px solid #eee; }
 </style>

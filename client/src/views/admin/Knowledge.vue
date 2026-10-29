@@ -18,15 +18,15 @@
       <el-card style="margin-top:16px">
         <h3>文档列表（{{ docs.length }}）</h3>
         <el-table :data="docs" size="small">
-          <el-table-column prop="id" label="ID" width="60" />
-          <el-table-column prop="fileName" label="文件名" />
-          <el-table-column prop="vectorStatus" label="状态" width="90">
+          <el-table-column prop="id" label="ID" width="70" align="center" />
+          <el-table-column prop="fileName" label="文件名" min-width="220" />
+          <el-table-column prop="vectorStatus" label="状态" width="100" align="center">
             <template #default="{ row }">
-              <el-tag :type="row.vectorStatus === 'done' ? 'success' : 'warning'">{{ row.vectorStatus }}</el-tag>
+              <el-tag :type="row.vectorStatus === 'done' ? 'success' : 'warning'">{{ row.vectorStatus === 'done' ? '已入库' : '待处理' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="chunkCount" label="切片数" width="80" />
-          <el-table-column label="操作" width="150">
+          <el-table-column prop="chunkCount" label="切片数" width="90" align="center" />
+          <el-table-column label="操作" width="210" align="center">
             <template #default="{ row }">
               <el-button size="small" @click="vectorize(row.id)">重新向量化</el-button>
               <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
