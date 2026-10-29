@@ -3,9 +3,13 @@ package com.campuspedia.service;
 import com.campuspedia.domain.ChatResponse;
 import com.campuspedia.domain.Source;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 问答编排：检索 → Prompt 组装 → 调用 LLM → 组装溯源引用。
@@ -36,6 +40,43 @@ public class ChatService {
         }
         String answer = llmService.chat(promptBuilder.systemPrompt(), promptBuilder.userPrompt(question, results));
         return new ChatResponse(answer, buildSources(results));
+    }
+
+    /**
+     * 流式问答：先发 sources，再逐段发 delta，最后 done。
+     */
+    public void streamAnswer(String question, SseEmitter emitter) {
+        try {
+            List<RetrievalResult> results = (question == null || question.isBlank())
+                    ? List.of()
+                    : retriever.retrieve(question, TOP_K, THRESHOLD);
+            emit(emitter, "sources", buildSources(results));
+            if (results.isEmpty()) {
+                emit(emitter, "delta", "根据现有制度文件暂未找到明确依据，建议咨询相关部门。");
+            } else {
+                String system = promptBuilder.systemPrompt();
+                String user = promptBuilder.userPrompt(question, results);
+                llmService.stream(system, user, delta -> emit(emitter, "delta", delta));
+            }
+            emit(emitter, "done", null);
+            emitter.complete();
+        } catch (Exception e) {
+            emit(emitter, "error", e.getMessage());
+            emitter.complete();
+        }
+    }
+
+    private void emit(SseEmitter emitter, String type, Object data) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("type", type);
+        if (data != null) {
+            m.put("data", data);
+        }
+        try {
+            emitter.send(SseEmitter.event().data(m));
+        } catch (IOException ignored) {
+            // 客户端断开，忽略
+        }
     }
 
     private List<Source> buildSources(List<RetrievalResult> results) {
