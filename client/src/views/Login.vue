@@ -3,12 +3,12 @@
     <el-card class="login-card">
       <h2>学事通 · CampusPedia</h2>
       <p class="sub">校园学生事务智能问答</p>
-      <el-form @submit.prevent>
-        <el-form-item>
-          <el-input v-model="username" placeholder="用户名" />
+      <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent>
+        <el-form-item prop="username">
+          <el-input v-model="form.username" placeholder="用户名（3-20 位）" />
         </el-form-item>
-        <el-form-item>
-          <el-input v-model="password" type="password" placeholder="密码" show-password @keyup.enter="login" />
+        <el-form-item prop="password">
+          <el-input v-model="form.password" type="password" placeholder="密码（6-20 位）" show-password @keyup.enter="login" />
         </el-form-item>
         <el-button type="primary" style="width:100%" :loading="loading" @click="login">登录</el-button>
         <el-button text style="width:100%;margin-top:8px" @click="register">没有账号？注册</el-button>
@@ -19,52 +19,62 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import request from '../api/request'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
-const username = ref('')
-const password = ref('')
+const formRef = ref()
 const loading = ref(false)
 const msg = ref('')
+const form = reactive({ username: '', password: '' })
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度需 3-20 位', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度需 6-20 位', trigger: 'blur' },
+  ],
+}
 
 async function login() {
-  if (!username.value || !password.value) { msg.value = '请输入用户名和密码'; return }
-  if (username.value.length < 3 || username.value.length > 20) { msg.value = '用户名长度需 3-20 位'; return }
-  if (password.value.length < 6 || password.value.length > 20) { msg.value = '密码长度需 6-20 位'; return }
+  msg.value = ''
+  try { await formRef.value.validate() } catch { return }
   loading.value = true
   try {
-    const res = await request.post('/auth/login', { username: username.value, password: password.value }) as any
+    const res = await request.post('/auth/login', { username: form.username, password: form.password }) as any
     if (res.code === 200) {
       auth.setLogin(res.data.token, res.data.username, res.data.role)
       router.push(res.data.role === 'admin' ? '/admin' : '/')
     } else {
-      msg.value = res.msg || '登录失败'
+      ElMessage.error(res.msg || '登录失败')
     }
   } catch (e: any) {
-    msg.value = e?.response?.data?.msg || '登录失败'
+    ElMessage.error(e?.response?.data?.msg || '登录失败')
   } finally {
     loading.value = false
   }
 }
 
 async function register() {
-  if (!username.value || !password.value) { msg.value = '请输入用户名和密码'; return }
-  if (username.value.length < 3 || username.value.length > 20) { msg.value = '用户名长度需 3-20 位'; return }
-  if (password.value.length < 6 || password.value.length > 20) { msg.value = '密码长度需 6-20 位'; return }
+  msg.value = ''
+  try { await formRef.value.validate() } catch { return }
   try {
-    const res = await request.post('/auth/register', { username: username.value, password: password.value }) as any
+    const res = await request.post('/auth/register', { username: form.username, password: form.password }) as any
     if (res.code === 200) {
       auth.setLogin(res.data.token, res.data.username, res.data.role)
       router.push(res.data.role === 'admin' ? '/admin' : '/')
     } else {
-      msg.value = res.msg || '注册失败'
+      ElMessage.error(res.msg || '注册失败')
     }
   } catch (e: any) {
-    msg.value = e?.response?.data?.msg || '注册失败'
+    ElMessage.error(e?.response?.data?.msg || '注册失败')
   }
 }
 </script>

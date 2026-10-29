@@ -41,18 +41,19 @@
             </el-collapse-item>
           </el-collapse>
 
-          <div v-if="m.sources && m.sources.length" class="sources">
-            <div class="src-title">📎 参考来源</div>
-            <div v-for="s in m.sources" :key="s.index" class="src">
-              <div class="src-head">
-                <span class="src-no">[{{ s.index }}]</span>
-                <a v-if="s.sourceUrl" :href="s.sourceUrl" target="_blank">《{{ s.fileName }}》</a>
-                <span v-else class="src-name">《{{ s.fileName }}》</span>
-                <span v-if="s.clauseRef" class="clause">{{ s.clauseRef }}</span>
+          <el-collapse v-if="m.sources && m.sources.length" class="sources">
+            <el-collapse-item :title="'📎 参考来源（' + m.sources.length + ' 条）'" name="1">
+              <div v-for="g in groupedSources(m.sources)" :key="g.fileName" class="src">
+                <div class="src-head">
+                  <span class="src-no">{{ fmtIndices(g.indices) }}</span>
+                  <a v-if="g.sourceUrl" :href="g.sourceUrl" target="_blank">《{{ g.fileName }}》</a>
+                  <span v-else class="src-name">《{{ g.fileName }}》</span>
+                  <span v-if="g.clauseRef" class="clause">{{ g.clauseRef }}</span>
+                </div>
+                <div class="src-snippet">{{ g.snippet }}</div>
               </div>
-              <div class="src-snippet">{{ s.snippet }}</div>
-            </div>
-          </div>
+            </el-collapse-item>
+          </el-collapse>
         </div>
       </div>
     </div>
@@ -87,6 +88,7 @@ async function send(q?: string) {
   if (!question || loading.value) return
   input.value = ''
   loading.value = true
+  const history = messages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
   messages.value.push({ role: 'user', content: question, html: '', sources: [], trace: null })
   messages.value.push({ role: 'assistant', content: '', html: '', sources: [], trace: null })
   const aiIdx = messages.value.length - 1
@@ -95,7 +97,7 @@ async function send(q?: string) {
     const resp = await fetch('/api/chat/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, history }),
     })
     if (!resp.ok || !resp.body) throw new Error('请求失败(' + resp.status + ')')
     const reader = resp.body.getReader()
@@ -117,6 +119,7 @@ async function send(q?: string) {
         else if (ev.type === 'delta') {
           m.content += (ev.data || '')
           m.html = md.render(m.content)
+          scrollBottom()
         }
       }
     }
@@ -137,6 +140,25 @@ function parseEvent(raw: string): any {
   }
   if (!dataStr) return { type: 'done' }
   try { return JSON.parse(dataStr) } catch { return { type: 'error', data: dataStr } }
+}
+
+function groupedSources(sources: any[]) {
+  const groups: any[] = []
+  const map = new Map<string, any>()
+  for (const s of sources) {
+    const key = s.fileName + '|' + (s.clauseRef || '')
+    if (!map.has(key)) {
+      const g = { fileName: s.fileName, clauseRef: s.clauseRef, sourceUrl: s.sourceUrl, snippet: s.snippet, indices: [s.index] }
+      map.set(key, g); groups.push(g)
+    } else {
+      map.get(key).indices.push(s.index)
+    }
+  }
+  return groups
+}
+
+function fmtIndices(indices: number[]) {
+  return indices.map(i => '[' + i + ']').join(' ')
 }
 
 function scrollBottom() {
@@ -171,9 +193,8 @@ function scrollBottom() {
 .trace-row .label { color: #999; flex-shrink: 0; min-width: 68px; }
 .trace-row.block { flex-direction: column; align-items: stretch; }
 .prompt { background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; line-height: 1.6; margin: 4px 0 0; }
-.sources { margin-top: 10px; }
-.src-title { font-size: 12px; color: #999; margin-bottom: 6px; }
-.src { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+.sources { margin-top: 8px; background: #f7f8fa; border-radius: 8px; border: 1px solid #f0f0f0; }
+.src { background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
 .src-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
 .src-no { color: #4f46e5; font-weight: 700; }
 .src a { color: #4f46e5; text-decoration: none; font-weight: 500; }

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -27,10 +29,23 @@ public class ChatController {
     @PostMapping("/chat/stream")
     public SseEmitter stream(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         String question = String.valueOf(body.getOrDefault("question", ""));
-        Long sessionId = body.get("sessionId") == null ? null : Long.valueOf(String.valueOf(body.get("sessionId")));
         Long userId = authHelper.currentUserId(request);
         SseEmitter emitter = new SseEmitter(120_000L);
-        CompletableFuture.runAsync(() -> ragChain.stream(question, sessionId, userId, emitter));
+        CompletableFuture.runAsync(() -> ragChain.stream(question, parseHistory(body.get("history")), userId, emitter));
         return emitter;
+    }
+
+    private List<String> parseHistory(Object historyObj) {
+        List<String> history = new ArrayList<>();
+        if (historyObj instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> m) {
+                    String role = String.valueOf(m.get("role"));
+                    String content = String.valueOf(m.get("content"));
+                    history.add(("user".equals(role) ? "用户：" : "助手：") + content);
+                }
+            }
+        }
+        return history;
     }
 }
