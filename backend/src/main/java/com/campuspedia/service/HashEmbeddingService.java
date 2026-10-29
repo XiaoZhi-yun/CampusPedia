@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * 共享字符越多相似度越高，具备一定的语义区分能力。生产环境应切换到千问 DashScope。</p>
  */
 @Component
-@ConditionalOnProperty(name = "campus-pedia.embedding.provider", havingValue = "hash", matchIfMissing = true)
+@ConditionalOnProperty(name = "campus.embedding.provider", havingValue = "hash", matchIfMissing = true)
 public class HashEmbeddingService implements EmbeddingService {
 
     /** 向量维度（与后续千问 embedding 维度解耦，通过接口约束）。 */

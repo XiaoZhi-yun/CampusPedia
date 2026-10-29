@@ -10,14 +10,6 @@ spring:
     redis:
       host: 127.0.0.1
       port: 6379
-  ai:
-    openai:
-      api-key: ${DEEPSEEK_API_KEY}
-      base-url: https://api.deepseek.com
-      chat:
-        options:
-          model: deepseek-chat
-          temperature: 0.3
   servlet:
     multipart:
       max-file-size: 50MB
@@ -28,13 +20,18 @@ mybatis-plus:
     map-underscore-to-camel-case: true
 
 campus:
+  llm:
+    deepseek-api-key: ${DEEPSEEK_API_KEY:}
+    deepseek-base-url: https://api.deepseek.com
+    model: deepseek-chat
   embedding:
-    api-key: ${DASHSCOPE_API_KEY}
+    api-key: ${DASHSCOPE_API_KEY:}
     base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen3.7-text-embedding-flash
     dimensions: 1024
+    provider: ${EMBEDDING_PROVIDER:hash}
   rerank:
-    api-key: ${DASHSCOPE_API_KEY}
+    api-key: ${DASHSCOPE_API_KEY:}
     url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/gte-rerank
     model: gte-rerank-v2
   jwt:
@@ -46,3 +43,7 @@ campus:
     database: campus_pedia
     username: campus
     password: campus
+  storage:
+    path: uploads
+  corpus:
+    path: ../corpus/example

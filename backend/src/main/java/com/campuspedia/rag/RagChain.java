@@ -1,0 +1,168 @@
+package com.campuspedia.rag;
+
+import com.campuspedia.entity.ChatMessage;
+import com.campuspedia.mapper.ChatMessageMapper;
+import com.campuspedia.service.ConfigService;
+import com.campuspedia.service.LlmService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class RagChain {
+
+    private final QueryRewriter queryRewriter;
+    private final HybridRetriever hybridRetriever;
+    private final RerankService rerankService;
+    private final LlmService llmService;
+    private final ConfigService configService;
+    private final ChatMessageMapper messageMapper;
+
+    public RagChain(QueryRewriter queryRewriter, HybridRetriever hybridRetriever,
+                    RerankService rerankService, LlmService llmService,
+                    ConfigService configService, ChatMessageMapper messageMapper) {
+        this.queryRewriter = queryRewriter;
+        this.hybridRetriever = hybridRetriever;
+        this.rerankService = rerankService;
+        this.llmService = llmService;
+        this.configService = configService;
+        this.messageMapper = messageMapper;
+    }
+
+    public void stream(String question, Long sessionId, Long userId, SseEmitter emitter) {
+        try {
+            int topKRecall = configService.getInt("rag_top_k_recall", 20);
+            int topNFinal = configService.getInt("rag_top_n_final", 5);
+            boolean rerankEnabled = configService.getBool("rerank_enabled", true);
+            boolean hybridEnabled = configService.getBool("hybrid_enabled", true);
+            boolean rewriteEnabled = configService.getBool("query_rewrite_enabled", true);
+            String systemPrompt = configService.get("system_prompt",
+                    "你是学事通CampusPedia，只依据参考资料回答，资料不足明说，结论后标[1][2]");
+
+            List<String> history = loadHistory(sessionId);
+            String rewriteQuery = rewriteEnabled ? queryRewriter.rewrite(question, history) : question;
+
+            List<RetrievedChunk> candidates = hybridRetriever.retrieve(rewriteQuery, topKRecall, hybridEnabled);
+            List<RetrievedChunk> finalHits;
+            if (rerankEnabled && candidates.size() > topNFinal) {
+                finalHits = rerank(candidates, question, topNFinal);
+            } else {
+                finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
+            }
+
+            List<Map<String, Object>> sources = buildSources(finalHits);
+            String userPrompt = buildUserPrompt(question, finalHits);
+
+            emit(emitter, "sources", sources);
+            emit(emitter, "trace", Map.of(
+                    "rewriteQuery", rewriteQuery,
+                    "topKRecall", topKRecall,
+                    "topNFinal", topNFinal,
+                    "rerankEnabled", rerankEnabled,
+                    "hybridEnabled", hybridEnabled,
+                    "candidateCount", candidates.size(),
+                    "userPrompt", userPrompt,
+                    "systemPrompt", systemPrompt));
+
+            StringBuilder answer = new StringBuilder();
+            llmService.stream(systemPrompt, userPrompt, delta -> {
+                answer.append(delta);
+                emit(emitter, "delta", delta);
+            });
+
+            emit(emitter, "done", null);
+            emitter.complete();
+
+            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
+        } catch (Exception e) {
+            emit(emitter, "error", e.getMessage());
+            emitter.complete();
+        }
+    }
+
+    private List<RetrievedChunk> rerank(List<RetrievedChunk> candidates, String query, int topN) {
+        List<String> docs = candidates.stream().map(RetrievedChunk::content).toList();
+        List<RerankResult> results = rerankService.rerank(query, docs);
+        List<RetrievedChunk> finalHits = new ArrayList<>();
+        for (RerankResult r : results) {
+            if (r.index() < candidates.size()) finalHits.add(candidates.get(r.index()));
+            if (finalHits.size() >= topN) break;
+        }
+        return finalHits;
+    }
+
+    private List<Map<String, Object>> buildSources(List<RetrievedChunk> hits) {
+        List<Map<String, Object>> sources = new ArrayList<>();
+        for (int i = 0; i < hits.size(); i++) {
+            RetrievedChunk c = hits.get(i);
+            Map<String, Object> s = new LinkedHashMap<>();
+            s.put("index", i + 1);
+            s.put("fileName", c.fileName());
+            s.put("category", c.category());
+            s.put("clauseRef", c.clauseRef());
+            String snip = c.content();
+            s.put("snippet", snip.length() > 180 ? snip.substring(0, 180) + "..." : snip);
+            s.put("sourceUrl", c.sourceUrl());
+            s.put("score", Math.round(c.score() * 10000) / 10000.0);
+            sources.add(s);
+        }
+        return sources;
+    }
+
+    private String buildUserPrompt(String question, List<RetrievedChunk> hits) {
+        StringBuilder sb = new StringBuilder("【参考资料】\n");
+        for (int i = 0; i < hits.size(); i++) {
+            RetrievedChunk c = hits.get(i);
+            sb.append("[").append(i + 1).append("] 《").append(c.fileName()).append("》")
+              .append(c.clauseRef()).append("：").append(c.content()).append("\n\n");
+        }
+        sb.append("【学生问题】\n").append(question).append("\n\n请依据上述资料回答，结论后标注 [来源N]。");
+        return sb.toString();
+    }
+
+    private List<String> loadHistory(Long sessionId) {
+        if (sessionId == null) return List.of();
+        List<ChatMessage> msgs = messageMapper.selectList(
+                new QueryWrapper<ChatMessage>().eq("session_id", sessionId).orderByDesc("id").last("LIMIT 6"));
+        List<String> history = new ArrayList<>();
+        for (int i = msgs.size() - 1; i >= 0; i--) {
+            ChatMessage m = msgs.get(i);
+            history.add(("user".equals(m.getRole()) ? "用户：" : "助手：") + m.getContent());
+        }
+        return history;
+    }
+
+    private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
+        try {
+            ChatMessage m = new ChatMessage();
+            m.setSessionId(sessionId == null ? 0L : sessionId);
+            m.setUserId(userId == null ? 0L : userId);
+            m.setRole("user");
+            m.setContent(question);
+            m.setRetrieveQuery(rewriteQuery);
+            messageMapper.insert(m);
+            ChatMessage a = new ChatMessage();
+            a.setSessionId(sessionId == null ? 0L : sessionId);
+            a.setUserId(userId == null ? 0L : userId);
+            a.setRole("assistant");
+            a.setContent(answer);
+            a.setSources(sources.toString());
+            a.setHitCount(sources.size());
+            messageMapper.insert(a);
+        } catch (Exception ignore) {}
+    }
+
+    private void emit(SseEmitter emitter, String type, Object data) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("type", type);
+        if (data != null) m.put("data", data);
+        try { emitter.send(SseEmitter.event().data(m)); } catch (IOException ignored) {}
+    }
+}
