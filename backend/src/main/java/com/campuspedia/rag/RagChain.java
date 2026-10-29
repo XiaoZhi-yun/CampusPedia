@@ -16,11 +16,16 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class RagChain {
 
     private static final Logger log = LoggerFactory.getLogger(RagChain.class);
+
+    private static final Set<String> GREETINGS = Set.of(
+            "你好", "您好", "嗨", "hi", "hello", "哈喽", "在吗", "在不在",
+            "早上好", "下午好", "晚上好", "中午好", "谢谢", "感谢", "再见", "拜拜");
 
     private final QueryRewriter queryRewriter;
     private final HybridRetriever hybridRetriever;
@@ -40,7 +45,7 @@ public class RagChain {
         this.messageMapper = messageMapper;
     }
 
-    public void stream(String question, Long sessionId, Long userId, SseEmitter emitter) {
+    public void stream(String question, List<String> history, Long userId, SseEmitter emitter) {
         try {
             int topKRecall = configService.getInt("rag_top_k_recall", 20);
             int topNFinal = configService.getInt("rag_top_n_final", 5);
@@ -50,8 +55,18 @@ public class RagChain {
             String systemPrompt = configService.get("system_prompt",
                     "你是学事通CampusPedia，只依据参考资料回答，资料不足明说，结论后标[1][2]");
 
-            List<String> history = loadHistory(sessionId);
             String rewriteQuery = rewriteEnabled ? queryRewriter.rewrite(question, history) : question;
+
+            if (isGreeting(question)) {
+                emit(emitter, "sources", List.of());
+                emit(emitter, "trace", Map.of("note", "问候语，无需检索"));
+                StringBuilder greet = new StringBuilder();
+                llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。", delta -> { greet.append(delta); emit(emitter, "delta", delta); });
+                emit(emitter, "done", null);
+                emitter.complete();
+                saveMessage(null, userId, question, question, greet.toString(), List.of());
+                return;
+            }
 
             List<RetrievedChunk> candidates = hybridRetriever.retrieve(rewriteQuery, topKRecall, hybridEnabled);
             List<RetrievedChunk> finalHits;
@@ -136,16 +151,10 @@ public class RagChain {
         return sb.toString();
     }
 
-    private List<String> loadHistory(Long sessionId) {
-        if (sessionId == null) return List.of();
-        List<ChatMessage> msgs = messageMapper.selectList(
-                new QueryWrapper<ChatMessage>().eq("session_id", sessionId).orderByDesc("id").last("LIMIT 6"));
-        List<String> history = new ArrayList<>();
-        for (int i = msgs.size() - 1; i >= 0; i--) {
-            ChatMessage m = msgs.get(i);
-            history.add(("user".equals(m.getRole()) ? "用户：" : "助手：") + m.getContent());
-        }
-        return history;
+    private boolean isGreeting(String q) {
+        if (q == null) return false;
+        String s = q.trim().toLowerCase();
+        return GREETINGS.contains(s);
     }
 
     private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
