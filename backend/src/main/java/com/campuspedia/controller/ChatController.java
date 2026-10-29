@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /** 问答 REST 接口。 */
 @RestController
@@ -37,5 +39,15 @@ public class ChatController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /**
+     * 流式问答（SSE）：事件依次为 sources → delta* → done。
+     */
+    @PostMapping("/chat/stream")
+    public SseEmitter stream(@RequestBody ChatRequest request) {
+        SseEmitter emitter = new SseEmitter(120_000L);
+        CompletableFuture.runAsync(() -> chatService.streamAnswer(request.question(), emitter));
+        return emitter;
     }
 }

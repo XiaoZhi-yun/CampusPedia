@@ -1,9 +1,8 @@
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Microsoft YaHei', sans-serif;
-  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.6;
   color: #1f2329;
-  background-color: #f5f6f7;
+  background: #f5f6f7;
 }
 
 body {
@@ -13,22 +12,137 @@ body {
 .app {
   max-width: 860px;
   margin: 0 auto;
-  padding: 32px 16px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .app-header p {
-  margin: 4px 0 24px;
+  margin: 2px 0 12px;
   color: #6b7280;
+  font-size: 14px;
 }
 
-.app-main {
-  padding: 24px;
+.chat {
+  flex: 1;
+  overflow-y: auto;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
+  padding: 16px;
+}
+
+.hint {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.hint button {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4338ca;
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin: 0 4px 8px 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.msg {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.msg.user {
+  align-items: flex-end;
+}
+
+.msg.assistant {
+  align-items: flex-start;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg.user .bubble {
+  background: #4338ca;
+  color: #fff;
+}
+
+.msg.assistant .bubble {
+  background: #f3f4f6;
+}
+
+.sources {
+  margin-top: 6px;
+  max-width: 85%;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.source {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-top: 4px;
+}
+
+.src-badge {
+  color: #4338ca;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.src-sim {
+  margin-left: 8px;
+  color: #9ca3af;
+}
+
+.error {
+  margin-top: 8px;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.input-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.input-bar input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.input-bar button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #4338ca;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.input-bar button:disabled {
+  background: #c7d2fe;
+  cursor: not-allowed;
 }
