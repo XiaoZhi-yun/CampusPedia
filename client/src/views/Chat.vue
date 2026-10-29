@@ -20,7 +20,8 @@
         <div class="avatar">{{ m.role === 'user' ? '我' : '通' }}</div>
         <div class="body">
           <div class="bubble">
-            <div v-if="m.role === 'assistant'" v-html="m.html"></div>
+            <div v-if="m.role === 'assistant' && m.content" v-html="m.html"></div>
+            <div v-else-if="m.role === 'assistant' && loading" class="thinking">思考中…</div>
             <div v-else>{{ m.content }}</div>
           </div>
 
@@ -75,9 +76,9 @@ async function send(q?: string) {
   if (!question || loading.value) return
   input.value = ''
   loading.value = true
-  messages.value.push({ role: 'user', content: question })
-  const assistant = { role: 'assistant', content: '', html: '', sources: [] as any[], trace: null as any }
-  messages.value.push(assistant)
+  messages.value.push({ role: 'user', content: question, html: '', sources: [], trace: null })
+  messages.value.push({ role: 'assistant', content: '', html: '', sources: [], trace: null })
+  const aiIdx = messages.value.length - 1
 
   try {
     const resp = await fetch('/api/chat/stream', {
@@ -85,7 +86,7 @@ async function send(q?: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question }),
     })
-    if (!resp.ok || !resp.body) throw new Error('请求失败')
+    if (!resp.ok || !resp.body) throw new Error('请求失败(' + resp.status + ')')
     const reader = resp.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -98,17 +99,19 @@ async function send(q?: string) {
         const raw = buffer.slice(0, idx)
         buffer = buffer.slice(idx + 2)
         const ev = parseEvent(raw)
-        if (ev.type === 'sources') assistant.sources = ev.data || []
-        else if (ev.type === 'trace') assistant.trace = ev.data
+        const m = messages.value[aiIdx]
+        if (ev.type === 'sources') m.sources = ev.data || []
+        else if (ev.type === 'trace') m.trace = ev.data
         else if (ev.type === 'delta') {
-          assistant.content += (ev.data || '')
-          assistant.html = md.render(assistant.content)
+          m.content += (ev.data || '')
+          m.html = md.render(m.content)
         }
       }
     }
   } catch (e: any) {
-    assistant.content = '出错了：' + (e.message || '')
-    assistant.html = md.render(assistant.content)
+    const m = messages.value[aiIdx]
+    m.content = '出错了：' + (e.message || '')
+    m.html = md.render(m.content)
   } finally {
     loading.value = false
     scrollBottom()
