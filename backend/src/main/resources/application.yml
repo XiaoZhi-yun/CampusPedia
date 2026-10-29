@@ -1,24 +1,48 @@
+server:
+  port: 8081   # 避开 MaxKB 占用的 8080
+
 spring:
-  application:
-    name: campus-pedia
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3307/campus_pedia?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ${MYSQL_PASSWORD:123456}
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  ai:
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.3
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
+      max-file-size: 50MB
+      max-request-size: 50MB
 
-server:
-  port: 8080
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
 
-# API 密钥通过环境变量注入（见 .env.example），不写死、不进仓库
-campus-pedia:
-  llm:
-    deepseek-api-key: ${DEEPSEEK_API_KEY:}
-    deepseek-base-url: https://api.deepseek.com
-    model: deepseek-chat
+campus:
   embedding:
-    dashscope-api-key: ${DASHSCOPE_API_KEY:}
-    dashscope-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api-key: ${DASHSCOPE_API_KEY}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen3.7-text-embedding-flash
-    provider: ${EMBEDDING_PROVIDER:hash}
-  vector-store:
-    type: ${VECTOR_STORE_TYPE:memory}
+    dimensions: 1024
+  rerank:
+    api-key: ${DASHSCOPE_API_KEY}
+    url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/gte-rerank
+    model: gte-rerank-v2
+  jwt:
+    secret: ${JWT_SECRET:campuspedia-jwt-secret-key-2026-please-change}
+    expire-hours: 24
+  pgvector:
+    host: 127.0.0.1
+    port: 5432
+    database: campus_pedia
+    username: campus
+    password: campus
