@@ -4,6 +4,13 @@ import com.campuspedia.domain.Chunk;
 import com.campuspedia.domain.Document;
 import org.springframework.stereotype.Service;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -105,6 +112,30 @@ public class DocumentService {
                 || lower.endsWith(".json") || lower.endsWith(".csv")) {
             return new String(bytes, StandardCharsets.UTF_8);
         }
-        throw new IllegalArgumentException("暂不支持的文件格式：" + fileName + "（当前支持 .md/.txt，PDF/Word 后续阶段支持）");
+        if (lower.endsWith(".pdf")) {
+            return extractPdf(bytes);
+        }
+        if (lower.endsWith(".docx")) {
+            return extractDocx(bytes);
+        }
+        throw new IllegalArgumentException("暂不支持的文件格式：" + fileName + "（支持 .md/.txt/.pdf/.docx；.doc 请另存为 .docx）");
+    }
+
+    private String extractPdf(byte[] bytes) {
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(doc);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("PDF 解析失败：" + e.getMessage());
+        }
+    }
+
+    private String extractDocx(byte[] bytes) {
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+            XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
+            return extractor.getText();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("DOCX 解析失败：" + e.getMessage());
+        }
     }
 }

@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
 import logo from './assets/logo.png'
+import AdminPanel from './AdminPanel'
 
 interface Source {
   index: number
@@ -68,6 +69,7 @@ export default function App() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [tab, setTab] = useState<'chat' | 'admin'>('chat')
   const listRef = useRef<HTMLDivElement>(null)
 
   async function ask() {
@@ -144,8 +146,14 @@ export default function App() {
             <p>CampusPedia · 校园学生事务智能问答</p>
           </div>
         </div>
+        <div className="tabs">
+          <button className={tab === 'chat' ? 'tab active' : 'tab'} onClick={() => setTab('chat')}>💬 问答</button>
+          <button className={tab === 'admin' ? 'tab active' : 'tab'} onClick={() => setTab('admin')}>📚 管理语料</button>
+        </div>
       </header>
 
+      {tab === 'chat' ? (
+        <>
       <div className="chat" ref={listRef}>
         {messages.length === 0 && (
           <div className="hint">
@@ -216,6 +224,10 @@ export default function App() {
           {loading ? '…' : '发送'}
         </button>
       </form>
+        </>
+      ) : (
+        <AdminPanel />
+      )}
     </div>
   )
 }
