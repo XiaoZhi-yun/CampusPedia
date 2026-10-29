@@ -135,7 +135,11 @@ function scrollBottom() {
 
 <style scoped>
 .chat-page { height: 100vh; display: flex; flex-direction: column; }
-.topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #eee; }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,.15); }
+.topbar .brand { color: #fff; }
+.topbar .brand .en { color: rgba(255,255,255,.75); }
+.topbar .user { color: rgba(255,255,255,.85); }
+.topbar :deep(.el-button.is-text) { color: rgba(255,255,255,.9); }
 .brand { font-size: 18px; font-weight: 600; }
 .brand .en { font-size: 12px; color: #999; font-weight: normal; }
 .actions { display: flex; align-items: center; gap: 8px; }
@@ -144,10 +148,11 @@ function scrollBottom() {
 .hint { color: #999; text-align: center; margin-top: 40px; }
 .msg { display: flex; gap: 10px; margin-bottom: 16px; }
 .msg.user { flex-direction: row-reverse; }
-.avatar { width: 32px; height: 32px; border-radius: 50%; background: #eef2ff; color: #4338ca; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: #eef2ff; color: #4338ca; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; font-weight: 600; }
+.msg.user .avatar { background: #4f46e5; color: #fff; }
 .body { max-width: 78%; }
-.bubble { padding: 10px 14px; border-radius: 12px; background: #f3f4f6; line-height: 1.6; word-break: break-word; }
-.msg.user .bubble { background: #4338ca; color: #fff; }
+.bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f0f0f0; }
+.msg.user .bubble { background: #4f46e5; color: #fff; border: none; }
 .trace { margin-top: 8px; }
 .prompt { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
 .sources { margin-top: 8px; font-size: 12px; color: #666; }

@@ -29,13 +29,23 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
+    private void validateUsername(String username) {
+        if (username == null || username.isBlank()) throw new BizException("用户名不能为空");
+        if (username.length() < 3 || username.length() > 20) throw new BizException("用户名长度需 3-20 位");
+        if (username.matches(".*\\s.*")) throw new BizException("用户名不能包含空格");
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.isBlank()) throw new BizException("密码不能为空");
+        if (password.length() < 6 || password.length() > 20) throw new BizException("密码长度需 6-20 位");
+    }
+
     @PostMapping("/register")
     public Result<Map<String, Object>> register(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");
-        if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            throw new BizException("用户名和密码不能为空");
-        }
+        validateUsername(username);
+        validatePassword(password);
         Long exists = userMapper.selectCount(new QueryWrapper<User>().eq("username", username));
         if (exists != null && exists > 0) throw new BizException("用户名已存在");
         User u = new User();
@@ -49,6 +59,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+        validateUsername(body.get("username"));
+        validatePassword(body.get("password"));
         User u = userMapper.selectOne(new QueryWrapper<User>().eq("username", body.get("username")));
         if (u == null || !passwordEncoder.matches(body.get("password"), u.getPassword())) {
             throw new BizException(401, "用户名或密码错误");
