@@ -45,7 +45,7 @@ public class RagChain {
         this.messageMapper = messageMapper;
     }
 
-    public void stream(String question, List<String> history, Long userId, SseEmitter emitter) {
+    public void stream(String question, List<String> history, Long sessionId, Long userId, SseEmitter emitter) {
         try {
             int topKRecall = configService.getInt("rag_top_k_recall", 20);
             int topNFinal = configService.getInt("rag_top_n_final", 5);
@@ -64,15 +64,16 @@ public class RagChain {
                 llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。", delta -> { greet.append(delta); emit(emitter, "delta", delta); });
                 emit(emitter, "done", null);
                 emitter.complete();
-                saveMessage(null, userId, question, question, greet.toString(), List.of());
+                saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 return;
             }
 
+            double threshold = Double.parseDouble(configService.get("rag_score_threshold", "0.3"));
             List<RetrievedChunk> candidates = hybridRetriever.retrieve(rewriteQuery, topKRecall, hybridEnabled);
             List<RetrievedChunk> finalHits;
-            if (rerankEnabled && candidates.size() > topNFinal) {
+            if (rerankEnabled && candidates.size() > 1) {
                 try {
-                    finalHits = rerank(candidates, question, topNFinal);
+                    finalHits = rerank(candidates, question, topNFinal, threshold);
                 } catch (Exception e) {
                     log.warn("Rerank 失败，降级为混合检索：{}", e.getMessage());
                     finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
@@ -80,6 +81,7 @@ public class RagChain {
             } else {
                 finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
             }
+            if (finalHits.isEmpty()) finalHits = new ArrayList<>(candidates.subList(0, Math.min(1, candidates.size())));
 
             List<Map<String, Object>> sources = buildSources(finalHits);
             String userPrompt = buildUserPrompt(question, finalHits);
@@ -87,13 +89,9 @@ public class RagChain {
             emit(emitter, "sources", sources);
             emit(emitter, "trace", Map.of(
                     "rewriteQuery", rewriteQuery,
-                    "topKRecall", topKRecall,
-                    "topNFinal", topNFinal,
-                    "rerankEnabled", rerankEnabled,
-                    "hybridEnabled", hybridEnabled,
                     "candidateCount", candidates.size(),
-                    "userPrompt", userPrompt,
-                    "systemPrompt", systemPrompt));
+                    "finalCount", finalHits.size(),
+                    "threshold", threshold));
 
             StringBuilder answer = new StringBuilder();
             llmService.stream(systemPrompt, userPrompt, delta -> {
@@ -104,19 +102,23 @@ public class RagChain {
             emit(emitter, "done", null);
             emitter.complete();
 
-            saveMessage(null, userId, question, rewriteQuery, answer.toString(), sources);
+            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
             emit(emitter, "error", e.getMessage());
             emitter.complete();
         }
     }
 
-    private List<RetrievedChunk> rerank(List<RetrievedChunk> candidates, String query, int topN) {
+    private List<RetrievedChunk> rerank(List<RetrievedChunk> candidates, String query, int topN, double threshold) {
         List<String> docs = candidates.stream().map(RetrievedChunk::content).toList();
         List<RerankResult> results = rerankService.rerank(query, docs);
         List<RetrievedChunk> finalHits = new ArrayList<>();
         for (RerankResult r : results) {
-            if (r.index() < candidates.size()) finalHits.add(candidates.get(r.index()));
+            if (r.relevanceScore() >= threshold && r.index() < candidates.size()) {
+                RetrievedChunk c = candidates.get(r.index());
+                finalHits.add(new RetrievedChunk(c.vectorId(), c.content(), c.documentId(), c.fileName(),
+                        c.category(), c.clauseRef(), c.sourceUrl(), r.relevanceScore()));
+            }
             if (finalHits.size() >= topN) break;
         }
         return finalHits;

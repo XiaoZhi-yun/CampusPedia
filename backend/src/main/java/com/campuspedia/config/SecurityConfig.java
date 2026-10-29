@@ -3,6 +3,7 @@ package com.campuspedia.config;
 import com.campuspedia.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,7 +35,12 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/chat/**", "/api/health").permitAll()
-                        .requestMatchers("/api/config/**", "/api/kb/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/notice/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/notice/**").hasRole("ADMIN")
+                        .requestMatchers("/api/config/**", "/api/kb/**", "/api/stats/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/feedback").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/feedback").authenticated()
+                        .requestMatchers("/api/sessions/**").authenticated()
                         .anyRequest().permitAll());
         return http.build();
     }
