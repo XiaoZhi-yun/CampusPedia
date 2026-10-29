@@ -33,6 +33,8 @@ const msg = ref('')
 
 async function login() {
   if (!username.value || !password.value) { msg.value = '请输入用户名和密码'; return }
+  if (username.value.length < 3 || username.value.length > 20) { msg.value = '用户名长度需 3-20 位'; return }
+  if (password.value.length < 6 || password.value.length > 20) { msg.value = '密码长度需 6-20 位'; return }
   loading.value = true
   try {
     const res = await request.post('/auth/login', { username: username.value, password: password.value }) as any
@@ -51,6 +53,8 @@ async function login() {
 
 async function register() {
   if (!username.value || !password.value) { msg.value = '请输入用户名和密码'; return }
+  if (username.value.length < 3 || username.value.length > 20) { msg.value = '用户名长度需 3-20 位'; return }
+  if (password.value.length < 6 || password.value.length > 20) { msg.value = '密码长度需 6-20 位'; return }
   try {
     const res = await request.post('/auth/register', { username: username.value, password: password.value }) as any
     if (res.code === 200) {
@@ -66,8 +70,9 @@ async function register() {
 </script>
 
 <style scoped>
-.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; }
-.login-card { width: 360px; text-align: center; }
-.sub { color: #999; margin: 4px 0 16px; font-size: 13px; }
-.msg { color: #e74c3c; font-size: 13px; }
+.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.login-card { width: 380px; text-align: center; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.login-card :deep(.el-card__body) { padding: 32px 28px; }
+.sub { color: #999; margin: 4px 0 20px; font-size: 13px; }
+.msg { color: #e74c3c; font-size: 13px; margin-top: 8px; }
 </style>
