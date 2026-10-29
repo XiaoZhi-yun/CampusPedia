@@ -6,6 +6,7 @@ import com.campuspedia.mapper.ChatMessageMapper;
 import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.service.ConfigService;
 import com.campuspedia.service.LlmService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -36,6 +37,7 @@ public class RagChain {
     private final ConfigService configService;
     private final ChatMessageMapper messageMapper;
     private final ChatSessionMapper sessionMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RagChain(QueryRewriter queryRewriter, HybridRetriever hybridRetriever,
                     RerankService rerankService, LlmService llmService,
@@ -66,9 +68,9 @@ public class RagChain {
                 emit(emitter, "trace", Map.of("note", "问候语，无需检索"));
                 StringBuilder greet = new StringBuilder();
                 llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。", delta -> { greet.append(delta); emit(emitter, "delta", delta); });
+                saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 emit(emitter, "done", null);
                 emitter.complete();
-                saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 return;
             }
 
@@ -103,10 +105,9 @@ public class RagChain {
                 emit(emitter, "delta", delta);
             });
 
+            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
             emit(emitter, "done", null);
             emitter.complete();
-
-            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
             emit(emitter, "error", e.getMessage());
             emitter.complete();
@@ -189,7 +190,7 @@ public class RagChain {
             a.setUserId(userId == null ? 0L : userId);
             a.setRole("assistant");
             a.setContent(answer);
-            a.setSources(sources.toString());
+            a.setSources(objectMapper.writeValueAsString(sources));
             a.setHitCount(sources.size());
             messageMapper.insert(a);
         } catch (Exception ignore) {}

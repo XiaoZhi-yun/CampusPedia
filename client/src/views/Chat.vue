@@ -22,7 +22,7 @@
         <div class="session-list">
           <div v-for="s in sessions" :key="s.id" class="session-item" :class="{ active: s.id === currentSessionId }" @click="openSession(s.id)">
             <span class="stitle">{{ s.title }}</span>
-            <span class="sdel" @click.stop="delSession(s.id)">✕</span>
+            <el-icon class="sdel" @click.stop="confirmDel(s)"><Delete /></el-icon>
           </div>
           <div v-if="sessions.length === 0" class="empty">暂无会话，点「新对话」开始</div>
         </div>
@@ -88,6 +88,7 @@ import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
 import request from '../api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -110,6 +111,10 @@ async function loadSessions() {
 }
 
 async function newSession() {
+  if (currentSessionId.value && messages.value.length === 0) {
+    ElMessage.info('请在当前对话框进行对话')
+    return
+  }
   try {
     const res = await request.post('/sessions', { title: '新对话' }) as any
     if (res.code === 200) {
@@ -134,6 +139,17 @@ async function openSession(id: number) {
       }))
       scrollBottom()
     }
+  } catch {}
+}
+
+async function confirmDel(s: any) {
+  try {
+    await ElMessageBox.confirm('是否删除：对话「' + s.title + '」？', '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await delSession(s.id)
   } catch {}
 }
 
