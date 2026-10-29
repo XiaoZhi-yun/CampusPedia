@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import logo from './assets/logo.png'
 
 interface Source {
@@ -8,12 +8,21 @@ interface Source {
   clauseRef: string
   snippet: string
   similarity: number
+  sourceUrl?: string
+}
+
+interface Trace {
+  topK: number
+  threshold: number
+  systemPrompt: string
+  userPrompt: string
 }
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
   sources?: Source[]
+  trace?: Trace
 }
 
 interface SseEvent {
@@ -33,6 +42,25 @@ function parseSse(raw: string): SseEvent {
   } catch {
     return { type: 'error', data: dataStr }
   }
+}
+
+/** 渲染答案：高亮 [来源N]，并处理 **加粗** */
+function renderAnswer(content: string): ReactNode {
+  const nodes: ReactNode[] = []
+  content.split(/(\[来源\d+\])/).forEach((part, i) => {
+    if (/^\[来源\d+\]$/.test(part)) {
+      nodes.push(<mark key={i} className="cite">{part}</mark>)
+    } else {
+      part.split(/(\*\*[^*]+\*\*)/).forEach((bp, j) => {
+        if (/^\*\*[^*]+\*\*$/.test(bp)) {
+          nodes.push(<strong key={i + '-' + j}>{bp.slice(2, -2)}</strong>)
+        } else {
+          nodes.push(<span key={i + '-' + j}>{bp}</span>)
+        }
+      })
+    }
+  })
+  return nodes
 }
 
 export default function App() {
@@ -78,6 +106,9 @@ export default function App() {
           if (ev.type === 'sources') {
             sources = (ev.data as Source[]) ?? []
             updateLast((m) => ({ ...m, sources }))
+          } else if (ev.type === 'trace') {
+            const trace = ev.data as Trace
+            updateLast((m) => ({ ...m, trace }))
           } else if (ev.type === 'delta') {
             const chunk = String(ev.data ?? '')
             updateLast((m) => ({ ...m, content: m.content + chunk }))
@@ -125,13 +156,38 @@ export default function App() {
         {messages.map((m, i) => (
           <div key={i} className={'msg ' + m.role}>
             <div className="bubble">
-              {m.content || (loading && i === messages.length - 1 ? '思考中…' : '')}
+              {m.role === 'assistant'
+                ? m.content
+                  ? renderAnswer(m.content)
+                  : loading && i === messages.length - 1
+                    ? '思考中…'
+                    : ''
+                : m.content}
             </div>
+
+            {m.trace && (
+              <details className="trace">
+                <summary>🔍 思考过程（检索 Top-K={m.trace.topK} · 阈值 {m.trace.threshold}）</summary>
+                <div className="trace-body">
+                  <h4>组装后的 Prompt（发给大模型的完整上下文）：</h4>
+                  <pre className="prompt">{m.trace.userPrompt}</pre>
+                </div>
+              </details>
+            )}
+
             {m.sources && m.sources.length > 0 && (
               <div className="sources">
                 {m.sources.map((s) => (
                   <div key={s.index} className="source">
-                    <span className="src-badge">[来源{s.index}]</span>《{s.fileName}》{s.clauseRef}
+                    <span className="src-badge">[来源{s.index}]</span>
+                    {s.sourceUrl ? (
+                      <a href={s.sourceUrl} target="_blank" rel="noreferrer">
+                        《{s.fileName}》
+                      </a>
+                    ) : (
+                      <span>《{s.fileName}》</span>
+                    )}
+                    <span className="src-clause">{s.clauseRef}</span>
                     <span className="src-sim">相似度 {s.similarity.toFixed(2)}</span>
                   </div>
                 ))}

@@ -56,6 +56,13 @@ public class ChatService {
             } else {
                 String system = promptBuilder.systemPrompt();
                 String user = promptBuilder.userPrompt(question, results);
+                // 思考可视化：透传组装后的 Prompt 与检索参数
+                emit(emitter, "trace", Map.of(
+                        "topK", TOP_K,
+                        "threshold", THRESHOLD,
+                        "systemPrompt", system,
+                        "userPrompt", user
+                ));
                 llmService.stream(system, user, delta -> emit(emitter, "delta", delta));
             }
             emit(emitter, "done", null);
@@ -93,7 +100,8 @@ public class ChatService {
                     r.chunk().category(),
                     r.chunk().clauseRef(),
                     snippet,
-                    Math.round(r.similarity() * 10000) / 10000.0
+                    Math.round(r.similarity() * 10000) / 10000.0,
+                    r.chunk().sourceUrl()
             ));
         }
         return sources;

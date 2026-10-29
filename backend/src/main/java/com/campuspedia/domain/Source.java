@@ -9,6 +9,7 @@ package com.campuspedia.domain;
  * @param clauseRef  条款引用（第X章/第X条）
  * @param snippet    原文片段（截断）
  * @param similarity 与问题的相似度
+ * @param sourceUrl  官网原文链接（可空）
  */
 public record Source(
         int index,
@@ -16,5 +17,6 @@ public record Source(
         String category,
         String clauseRef,
         String snippet,
-        double similarity
+        double similarity,
+        String sourceUrl
 ) {}

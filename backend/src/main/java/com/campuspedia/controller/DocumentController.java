@@ -46,9 +46,10 @@ public class DocumentController {
     @PostMapping
     public ResponseEntity<?> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "category", defaultValue = "未分类") String category) {
+            @RequestParam(value = "category", defaultValue = "未分类") String category,
+            @RequestParam(value = "sourceUrl", required = false) String sourceUrl) {
         try {
-            Document doc = documentService.ingest(file.getOriginalFilename(), category, file.getBytes());
+            Document doc = documentService.ingest(file.getOriginalFilename(), category, sourceUrl, file.getBytes());
             return ResponseEntity.ok(doc);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

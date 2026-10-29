@@ -14,7 +14,7 @@ class PromptBuilderTest {
         PromptBuilder pb = new PromptBuilder();
         RetrievalResult r = new RetrievalResult(
                 new Chunk("c1", "d1", "《河南理工大学学生学籍管理规定（修订）》", "学籍", "第十二条",
-                        "学生可以申请转专业。", new float[]{1}),
+                        "学生可以申请转专业。", new float[]{1}, null),
                 0.95);
         String prompt = pb.userPrompt("转专业要什么条件", List.of(r));
         assertTrue(prompt.contains("[来源1]"));

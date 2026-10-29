@@ -42,7 +42,7 @@ public class DocumentService {
      * @param bytes    文件原始字节
      * @return 导入后的文档元信息
      */
-    public Document ingest(String fileName, String category, byte[] bytes) {
+    public Document ingest(String fileName, String category, String sourceUrl, byte[] bytes) {
         String text = extractText(fileName, bytes);
         String id = UUID.randomUUID().toString();
 
@@ -57,13 +57,14 @@ public class DocumentService {
                     category,
                     ct.clauseRef(),
                     ct.text(),
-                    embedding.embed(ct.text())
+                    embedding.embed(ct.text()),
+                    sourceUrl
             );
             chunks.add(chunk);
             vectorStore.add(chunk);
         }
 
-        Document doc = new Document(id, fileName, category, text.length(), chunks.size(), Instant.now());
+        Document doc = new Document(id, fileName, category, sourceUrl, text.length(), chunks.size(), Instant.now());
         documents.put(id, doc);
         return doc;
     }

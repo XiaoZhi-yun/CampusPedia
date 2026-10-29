@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 class RetrieverTest {
 
     private Chunk chunk(String id, float[] emb) {
-        return new Chunk(id, "doc1", "test.md", "测试", "第一条", "正文", emb);
+        return new Chunk(id, "doc1", "test.md", "测试", "第一条", "正文", emb, null);
     }
 
     @Test
