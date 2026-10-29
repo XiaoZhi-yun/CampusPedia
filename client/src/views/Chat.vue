@@ -164,9 +164,12 @@ async function send(q?: string) {
   }
 
   try {
+    const token = localStorage.getItem('token')
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers.Authorization = 'Bearer ' + token
     const resp = await fetch('/api/chat/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ question, history, sessionId: currentSessionId.value }),
     })
     if (!resp.ok || !resp.body) throw new Error('请求失败(' + resp.status + ')')
