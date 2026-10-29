@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import logo from './assets/logo.png'
 
 interface Source {
   index: number
@@ -105,8 +106,13 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>学事通</h1>
-        <p>CampusPedia · 校园学生事务智能问答</p>
+        <div className="header-row">
+          <img src={logo} alt="学事通" className="logo" />
+          <div>
+            <h1>学事通</h1>
+            <p>CampusPedia · 校园学生事务智能问答</p>
+          </div>
+        </div>
       </header>
 
       <div className="chat" ref={listRef}>

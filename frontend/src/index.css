@@ -19,6 +19,18 @@ body {
   box-sizing: border-box;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 24px;
