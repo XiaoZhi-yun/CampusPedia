@@ -20,6 +20,8 @@ public class ChatService {
     private static final int TOP_K = 6;
     private static final double THRESHOLD = 0.5;
 
+    private static final List<String> GREETINGS = List.of("你好", "您好", "hi", "hello", "在吗", "在么", "嗨");
+
     private final Retriever retriever;
     private final PromptBuilder promptBuilder;
     private final LlmService llmService;
@@ -36,7 +38,7 @@ public class ChatService {
         }
         List<RetrievalResult> results = retriever.retrieve(question, TOP_K, THRESHOLD);
         if (results.isEmpty()) {
-            return new ChatResponse("根据现有制度文件暂未找到明确依据，建议咨询相关部门。", List.of());
+            return new ChatResponse(isGreeting(question) ? greetingText() : fallbackText(), List.of());
         }
         String answer = llmService.chat(promptBuilder.systemPrompt(), promptBuilder.userPrompt(question, results));
         return new ChatResponse(answer, buildSources(results));
@@ -52,7 +54,7 @@ public class ChatService {
                     : retriever.retrieve(question, TOP_K, THRESHOLD);
             emit(emitter, "sources", buildSources(results));
             if (results.isEmpty()) {
-                emit(emitter, "delta", "根据现有制度文件暂未找到明确依据，建议咨询相关部门。");
+                emit(emitter, "delta", isGreeting(question) ? greetingText() : fallbackText());
             } else {
                 String system = promptBuilder.systemPrompt();
                 String user = promptBuilder.userPrompt(question, results);
@@ -71,6 +73,22 @@ public class ChatService {
             emit(emitter, "error", e.getMessage());
             emitter.complete();
         }
+    }
+
+    private boolean isGreeting(String q) {
+        if (q == null || q.isBlank()) {
+            return false;
+        }
+        String t = q.trim().toLowerCase();
+        return GREETINGS.stream().anyMatch(t::contains);
+    }
+
+    private String greetingText() {
+        return "你好！我是「学事通」CampusPedia，校园学生事务智能问答助手。\n你可以问我关于学籍、选课考试、奖惩、奖助学金、勤工助学、住宿、素质拓展、就业、医保等问题。";
+    }
+
+    private String fallbackText() {
+        return "根据现有制度文件暂未找到明确依据，建议咨询相关部门。";
     }
 
     private void emit(SseEmitter emitter, String type, Object data) {
