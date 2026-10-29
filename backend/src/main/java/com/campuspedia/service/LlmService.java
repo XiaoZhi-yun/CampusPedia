@@ -31,13 +31,13 @@ public class LlmService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${campus-pedia.llm.deepseek-api-key}")
+    @Value("${campus.llm.deepseek-api-key}")
     private String apiKey;
 
-    @Value("${campus-pedia.llm.deepseek-base-url}")
+    @Value("${campus.llm.deepseek-base-url}")
     private String baseUrl;
 
-    @Value("${campus-pedia.llm.model}")
+    @Value("${campus.llm.model}")
     private String model;
 
     /** 非流式生成。 */

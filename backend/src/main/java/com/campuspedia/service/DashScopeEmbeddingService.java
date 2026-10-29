@@ -15,22 +15,22 @@ import java.util.Map;
 
 /**
  * 千问 DashScope 向量化实现（OpenAI 兼容模式）。
- * 当 campus-pedia.embedding.provider=dashscope 时启用，调用 {base-url}/embeddings。
+ * 当 campus.embedding.provider=dashscope 时启用，调用 {base-url}/embeddings。
  */
 @Component
-@ConditionalOnProperty(name = "campus-pedia.embedding.provider", havingValue = "dashscope")
+@ConditionalOnProperty(name = "campus.embedding.provider", havingValue = "dashscope")
 public class DashScopeEmbeddingService implements EmbeddingService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${campus-pedia.embedding.dashscope-api-key}")
+    @Value("${campus.embedding.api-key}")
     private String apiKey;
 
-    @Value("${campus-pedia.embedding.dashscope-base-url}")
+    @Value("${campus.embedding.base-url}")
     private String baseUrl;
 
-    @Value("${campus-pedia.embedding.model}")
+    @Value("${campus.embedding.model}")
     private String model;
 
     /** 实际维度在首次成功调用后确定。 */
