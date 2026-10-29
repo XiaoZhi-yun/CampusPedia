@@ -214,3 +214,130 @@ body {
 .src-clause {
   margin-left: 4px;
 }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  padding: 6px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tab.active {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #fff;
+}
+
+.admin {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.admin h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.admin-tip {
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.upload-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.upload-form input[type='file'] {
+  flex: 1;
+  min-width: 200px;
+}
+
+.upload-form select,
+.upload-form input[type='text'] {
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.upload-form button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #4338ca;
+  color: #fff;
+  cursor: pointer;
+}
+
+.upload-form button:disabled {
+  background: #c7d2fe;
+  cursor: not-allowed;
+}
+
+.admin-msg {
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.doc-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-empty {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.doc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.doc-name {
+  font-weight: 600;
+}
+
+.doc-meta {
+  margin-left: 8px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.doc-link {
+  margin-left: 8px;
+  color: #4338ca;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.doc-del {
+  padding: 4px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+}
