@@ -35,6 +35,15 @@ public class RecursiveSplitter {
         String[] parts = text.split(Pattern.quote(sep), -1);
         StringBuilder buf = new StringBuilder();
         for (String part : parts) {
+            if (part.length() > chunkSize) {
+                if (buf.length() > 0) {
+                    out.add(buf.toString().trim());
+                    String tail = buf.substring(Math.max(0, buf.length() - overlap));
+                    buf = new StringBuilder(tail);
+                }
+                splitRecursive(part, chunkSize, overlap, sepIdx + 1, out);
+                continue;
+            }
             if (buf.length() + part.length() + sep.length() > chunkSize && buf.length() > 0) {
                 out.add(buf.toString().trim());
                 String tail = buf.substring(Math.max(0, buf.length() - overlap));
