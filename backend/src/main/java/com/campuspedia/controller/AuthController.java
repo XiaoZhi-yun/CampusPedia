@@ -29,10 +29,10 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
-    private void validateUsername(String username) {
-        if (username == null || username.isBlank()) throw new BizException("用户名不能为空");
-        if (username.length() < 3 || username.length() > 20) throw new BizException("用户名长度需 3-20 位");
-        if (username.matches(".*\\s.*")) throw new BizException("用户名不能包含空格");
+    private void validateStudentNo(String studentNo) {
+        if (studentNo == null || studentNo.isBlank()) throw new BizException("学号不能为空");
+        if (studentNo.length() < 4 || studentNo.length() > 20) throw new BizException("学号长度需 4-20 位");
+        if (studentNo.matches(".*\\s.*")) throw new BizException("学号不能包含空格");
     }
 
     private void validatePassword(String password) {
@@ -42,15 +42,24 @@ public class AuthController {
 
     @PostMapping("/register")
     public Result<Map<String, Object>> register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
+        String studentNo = body.get("studentNo");
+        String realName = body.get("realName");
+        String major = body.get("major");
+        String className = body.get("className");
         String password = body.get("password");
-        validateUsername(username);
+        validateStudentNo(studentNo);
         validatePassword(password);
-        Long exists = userMapper.selectCount(new QueryWrapper<User>().eq("username", username));
-        if (exists != null && exists > 0) throw new BizException("用户名已存在");
+        if (realName == null || realName.isBlank()) throw new BizException("姓名不能为空");
+        Long exists = userMapper.selectCount(new QueryWrapper<User>().eq("student_no", studentNo));
+        if (exists != null && exists > 0) throw new BizException("该学号已被注册");
         User u = new User();
-        u.setUsername(username);
+        u.setStudentNo(studentNo);
+        u.setUsername(studentNo);
+        u.setRealName(realName);
+        u.setMajor(major == null ? "" : major);
+        u.setClassName(className == null ? "" : className);
         u.setPassword(passwordEncoder.encode(password));
+        u.setAvatar("p1");
         u.setRole("user");
         u.setStatus(1);
         userMapper.insert(u);
@@ -59,20 +68,26 @@ public class AuthController {
 
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> body) {
-        validateUsername(body.get("username"));
-        validatePassword(body.get("password"));
-        User u = userMapper.selectOne(new QueryWrapper<User>().eq("username", body.get("username")));
-        if (u == null || !passwordEncoder.matches(body.get("password"), u.getPassword())) {
-            throw new BizException(401, "用户名或密码错误");
+        String studentNo = body.get("studentNo");
+        String password = body.get("password");
+        validateStudentNo(studentNo);
+        validatePassword(password);
+        User u = userMapper.selectOne(new QueryWrapper<User>().eq("student_no", studentNo));
+        if (u == null || !passwordEncoder.matches(password, u.getPassword())) {
+            throw new BizException(401, "学号或密码错误");
         }
         return Result.ok(loginResult(u), "登录成功");
     }
 
     private Map<String, Object> loginResult(User u) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("token", jwtUtil.generate(u.getId(), u.getUsername(), u.getRole()));
+        m.put("token", jwtUtil.generate(u.getId(), u.getStudentNo() == null ? u.getUsername() : u.getStudentNo(), u.getRole()));
         m.put("userId", u.getId());
-        m.put("username", u.getUsername());
+        m.put("studentNo", u.getStudentNo());
+        m.put("realName", u.getRealName());
+        m.put("major", u.getMajor());
+        m.put("className", u.getClassName());
+        m.put("avatar", u.getAvatar());
         m.put("role", u.getRole());
         return m;
     }

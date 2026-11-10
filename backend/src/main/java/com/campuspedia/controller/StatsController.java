@@ -5,6 +5,7 @@ import com.campuspedia.mapper.ChatMessageMapper;
 import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.mapper.FeedbackMapper;
 import com.campuspedia.mapper.KbDocumentMapper;
+import com.campuspedia.mapper.UserMapper;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,13 +22,15 @@ public class StatsController {
     private final ChatSessionMapper sessionMapper;
     private final ChatMessageMapper messageMapper;
     private final FeedbackMapper feedbackMapper;
+    private final UserMapper userMapper;
 
     public StatsController(KbDocumentMapper documentMapper, ChatSessionMapper sessionMapper,
-                           ChatMessageMapper messageMapper, FeedbackMapper feedbackMapper) {
+                           ChatMessageMapper messageMapper, FeedbackMapper feedbackMapper, UserMapper userMapper) {
         this.documentMapper = documentMapper;
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.feedbackMapper = feedbackMapper;
+        this.userMapper = userMapper;
     }
 
     @GetMapping("/overview")
@@ -37,7 +40,13 @@ public class StatsController {
         m.put("sessions", sessionMapper.selectCount(null));
         m.put("messages", messageMapper.selectCount(null));
         m.put("feedback", feedbackMapper.selectCount(null));
+        m.put("users", userMapper.selectCount(null));
         return Result.ok(m);
+    }
+
+    @GetMapping("/docTypes")
+    public Result<List<Map<String, Object>>> docTypes() {
+        return Result.ok(documentMapper.countByType());
     }
 
     @GetMapping("/daily")

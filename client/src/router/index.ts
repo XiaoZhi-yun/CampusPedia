@@ -4,6 +4,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: () => import('../views/Login.vue') },
+    { path: '/profile', name: 'profile', component: () => import('../views/Profile.vue') },
     { path: '/', name: 'chat', component: () => import('../views/Chat.vue') },
     { path: '/admin', name: 'admin', component: () => import('../views/admin/Home.vue') },
     { path: '/admin/knowledge', name: 'knowledge', component: () => import('../views/admin/Knowledge.vue') },

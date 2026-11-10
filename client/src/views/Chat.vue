@@ -4,8 +4,9 @@
       <div class="brand">学事通 <span class="en">CampusPedia</span></div>
       <div class="actions">
         <template v-if="auth.token">
+          <el-button text @click="$router.push('/profile')">个人中心</el-button>
           <el-button v-if="auth.role === 'admin'" text @click="$router.push('/admin')">管理后台</el-button>
-          <span class="user">{{ auth.username }}</span>
+          <span class="user">{{ auth.realName || auth.studentNo }}</span>
           <el-button text @click="logout">退出</el-button>
         </template>
         <template v-else>
@@ -45,16 +46,6 @@
                 <div v-else-if="m.role === 'assistant' && loading" class="thinking">思考中…</div>
                 <div v-else>{{ m.content }}</div>
               </div>
-
-              <el-collapse v-if="m.trace" class="trace">
-                <el-collapse-item title="🔍 思考过程" name="1">
-                  <div class="trace-body">
-                    <div class="trace-row"><span class="label">改写 query</span><span>{{ m.trace.rewriteQuery || '—' }}</span></div>
-                    <div class="trace-row"><span class="label">检索</span><span>候选 {{ m.trace.candidateCount }} 条 → 保留 {{ m.trace.finalCount }} 条（阈值 {{ m.trace.threshold }}）</span></div>
-                    <div v-if="m.trace.note" class="trace-row"><span class="label">说明</span><span>{{ m.trace.note }}</span></div>
-                  </div>
-                </el-collapse-item>
-              </el-collapse>
 
               <el-collapse v-if="m.sources && m.sources.length" class="sources">
                 <el-collapse-item :title="'📎 参考来源（' + m.sources.length + ' 条）'" name="1">
