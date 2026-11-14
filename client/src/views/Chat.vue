@@ -208,7 +208,8 @@ async function send(q?: string) {
     const reader = resp.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
-    while (true) {
+    let receivedDone = false
+    while (!receivedDone) {
       const { done, value } = await reader.read()
       if (done) break
       buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
@@ -217,7 +218,8 @@ async function send(q?: string) {
         const raw = buffer.slice(0, idx); buffer = buffer.slice(idx + 2)
         const ev = parseEvent(raw); const m = messages.value[aiIdx]
         if (ev.type === 'sources') m.sources = ev.data || []
-        else if (ev.type === 'error') { m.content = '出错了：' + (ev.data || ''); m.html = renderAnswer(m.content) }
+        else if (ev.type === 'done') { receivedDone = true; break }
+        else if (ev.type === 'error') { m.content = '出错了：' + (ev.data || ''); m.html = renderAnswer(m.content); receivedDone = true; break }
         else if (ev.type === 'delta') { m.content += (ev.data || ''); m.html = renderAnswer(m.content); scrollBottom() }
       }
     }
