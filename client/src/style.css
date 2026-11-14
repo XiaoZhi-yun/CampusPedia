@@ -1,33 +1,31 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f6f7; }
 
-/* 深色模式 */
-.dark body { background: #111827; }
-.dark .chat-page, .dark .admin-page, .dark .profile-page { background: #1f2937; }
-.dark .msg-list { background: #111827; }
-.dark .bubble { background: #1f2937; color: #e5e7eb; border-color: #374151; }
-.dark .sidebar, .dark .input-bar { background: #1f2937; border-color: #374151; }
-.dark .session-item { color: #d1d5db; }
-.dark .session-item.active { background: #374151; color: #fff; }
-.dark .src { background: #1f2937; border-color: #374151; color: #d1d5db; }
-.dark .el-card { background: #1f2937; border-color: #374151; color: #e5e7eb; }
-.dark .topbar { background: #1f2937; }
-.dark .el-table { background: #1f2937; color: #e5e7eb; }
-.dark .el-table th { background: #1f2937; }
-
-.page-title { margin: 0 0 16px; font-size: 20px; font-weight: 600; color: #1f2937; }
-.dark .page-title { color: #e5e7eb; }
-
-.dark body { background: #111827; }
-.dark .login-wrap { background: #111827; }
-.dark .hint, .dark .hint-title, .dark .empty { color: #6b7280; }
-.dark .notice-banner { background: #1f2937; color: #a5b4fc; }
-.dark .op-bar :deep(.el-button) { color: #d1d5db; }
+/* ===== 统一深色主题 ===== */
+html.dark body { background: #0d1117; color: #c9d1d9; }
+html.dark .chat-page, html.dark .admin-page, html.dark .profile-page { background: #0d1117; }
+html.dark .chat-area, html.dark .msg-list { background: #0d1117; }
+html.dark .navbar { background: #161b22; border-color: #30363d; }
+html.dark .sidebar { background: #161b22; border-color: #30363d; }
+html.dark .input-bar { background: #161b22; border-color: #30363d; }
+html.dark .bubble { background: #161b22; color: #c9d1d9; border-color: #30363d; }
+html.dark .msg.user .bubble { background: #4f46e5; color: #fff; }
+html.dark .session-item { color: #c9d1d9; }
+html.dark .session-item:hover { background: #1f2428; }
+html.dark .session-item.active { background: #2d333b; color: #e6edf3; }
+html.dark .src { background: #161b22; border-color: #30363d; color: #c9d1d9; }
+html.dark .src-snippet, html.dark .clause { color: #8b949e; }
+html.dark .trace, html.dark .sources { background: #161b22; border-color: #30363d; }
+html.dark .login-wrap { background: #0d1117; }
+html.dark .login-card h2, html.dark .login-card .sub { color: #c9d1d9; }
+html.dark .notice-banner { background: #161b22; color: #a5b4fc; border-color: #30363d; }
+html.dark .guest-banner { background: #2d2400; color: #d29922; border-color: #5a4a00; }
+html.dark .hint, html.dark .hint-title, html.dark .empty { color: #8b949e; }
+html.dark .page-title { color: #e6edf3; }
+html.dark .el-card { --el-card-bg-color: #161b22; border-color: #30363d; }
+html.dark .el-table { --el-table-bg-color: #161b22; --el-table-header-bg-color: #1f2428; --el-table-border-color: #30363d; --el-table-text-color: #c9d1d9; --el-table-header-text-color: #c9d1d9; --el-table-row-hover-bg-color: #1f2428; }
+html.dark .el-input__wrapper, html.dark .el-textarea__inner { background-color: #0d1117; box-shadow: 0 0 0 1px #30363d inset; }
+html.dark .el-dialog { background: #161b22; }
+html.dark .stat-card .num, html.dark .stat-card .label { color: #c9d1d9; }
 
 .el-table th .cell, .el-table td .cell { text-align: center; }
-
-html.dark body { background: #0d1117; color: #c9d1d9; }
-html.dark .el-card { --el-card-bg-color: #161b22; }
-html.dark .el-table { --el-table-bg-color: #161b22; --el-table-header-bg-color: #1f2428; --el-table-border-color: #30363d; --el-table-text-color: #c9d1d9; --el-table-header-text-color: #c9d1d9; }
-html.dark .el-input__wrapper, html.dark .el-textarea__inner { background-color: #0d1117; }
-html.dark .login-card h2 { color: #c9d1d9; }

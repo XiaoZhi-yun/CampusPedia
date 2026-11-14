@@ -12,7 +12,7 @@
           <el-table-column prop="className" label="班级" width="120" />
           <el-table-column label="角色" width="110">
             <template #default="{ row }">
-              <el-tag :type="row.role === 'admin' ? 'danger' : 'info'">{{ row.role === 'admin' ? '管理员' : '普通用户' }}</el-tag>
+              <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" style="width:80px;text-align:center;display:inline-block">{{ row.role === 'admin' ? '管理员' : '普通用户' }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="状态" width="90">
@@ -20,8 +20,8 @@
           </el-table-column>
           <el-table-column label="操作" width="180">
             <template #default="{ row }">
-              <el-button size="small" @click="toggleRole(row)">{{ row.role === 'admin' ? '设为普通用户' : '提权管理员' }}</el-button>
-              <el-button size="small" type="danger" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
+              <el-button size="small" style="width:96px" @click="toggleRole(row)">{{ row.role === 'admin' ? '设为普通用户' : '提权管理员' }}</el-button>
+              <el-button size="small" type="danger" style="width:64px" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
             </template>
           </el-table-column>
         </el-table>
