@@ -5,7 +5,8 @@
       <el-card>
         <el-table :data="list" size="small">
           <el-table-column prop="id" label="ID" width="60" />
-          <el-table-column prop="userId" label="用户ID" width="90" />
+          <el-table-column prop="userId" label="用户ID" width="80" />
+          <el-table-column prop="question" label="问题" min-width="180" show-overflow-tooltip />
           <el-table-column label="评分" width="90">
             <template #default="{ row }"><el-tag :type="row.rating === 1 ? 'success' : 'danger'">{{ row.rating === 1 ? '👍 有用' : '👎 无用' }}</el-tag></template>
           </el-table-column>

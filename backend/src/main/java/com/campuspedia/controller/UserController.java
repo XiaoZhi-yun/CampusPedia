@@ -19,7 +19,7 @@ public class UserController {
 
     @GetMapping
     public Result<List<User>> list() {
-        List<User> users = userMapper.selectList(new QueryWrapper<User>().orderByDesc("id"));
+        List<User> users = userMapper.selectList(new QueryWrapper<User>().orderByAsc("id"));
         for (User u : users) u.setPassword(null);
         return Result.ok(users);
     }

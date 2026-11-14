@@ -50,7 +50,7 @@ public class ProfileController {
         Long userId = authHelper.currentUserId(request);
         if (userId == null) throw new BizException(401, "未登录");
         User u = userMapper.selectById(userId);
-        if (body.getRealName() != null) u.setRealName(body.getRealName());
+        if (body.getUsername() != null) u.setUsername(body.getUsername());
         if (body.getMajor() != null) u.setMajor(body.getMajor());
         if (body.getClassName() != null) u.setClassName(body.getClassName());
         if (body.getAvatar() != null) u.setAvatar(body.getAvatar());

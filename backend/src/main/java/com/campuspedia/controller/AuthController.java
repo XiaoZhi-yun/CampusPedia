@@ -29,10 +29,16 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
+    private void validateUsername(String name) {
+        if (name == null || name.isBlank()) throw new BizException("姓名不能为空");
+        if (name.length() < 2 || name.length() > 20) throw new BizException("姓名长度需 2-20 位");
+        if (name.matches(".*\\s.*")) throw new BizException("姓名不能包含空格");
+    }
+
     private void validateStudentNo(String studentNo) {
         if (studentNo == null || studentNo.isBlank()) throw new BizException("学号不能为空");
         if (studentNo.length() < 4 || studentNo.length() > 20) throw new BizException("学号长度需 4-20 位");
-        if (studentNo.matches(".*\\s.*")) throw new BizException("学号不能包含空格");
+        if (!studentNo.matches("[a-zA-Z0-9]+")) throw new BizException("学号只能包含字母和数字");
     }
 
     private void validatePassword(String password) {
@@ -43,19 +49,18 @@ public class AuthController {
     @PostMapping("/register")
     public Result<Map<String, Object>> register(@RequestBody Map<String, String> body) {
         String studentNo = body.get("studentNo");
-        String realName = body.get("realName");
+        String username = body.get("username");
         String major = body.get("major");
         String className = body.get("className");
         String password = body.get("password");
         validateStudentNo(studentNo);
+        validateUsername(username);
         validatePassword(password);
-        if (realName == null || realName.isBlank()) throw new BizException("姓名不能为空");
         Long exists = userMapper.selectCount(new QueryWrapper<User>().eq("student_no", studentNo));
         if (exists != null && exists > 0) throw new BizException("该学号已被注册");
         User u = new User();
         u.setStudentNo(studentNo);
-        u.setUsername(studentNo);
-        u.setRealName(realName);
+        u.setUsername(username);
         u.setMajor(major == null ? "" : major);
         u.setClassName(className == null ? "" : className);
         u.setPassword(passwordEncoder.encode(password));
@@ -84,10 +89,10 @@ public class AuthController {
 
     private Map<String, Object> loginResult(User u) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("token", jwtUtil.generate(u.getId(), u.getStudentNo() == null ? u.getUsername() : u.getStudentNo(), u.getRole()));
+        m.put("token", jwtUtil.generate(u.getId(), u.getStudentNo(), u.getRole()));
         m.put("userId", u.getId());
         m.put("studentNo", u.getStudentNo());
-        m.put("realName", u.getRealName());
+        m.put("username", u.getUsername());
         m.put("major", u.getMajor());
         m.put("className", u.getClassName());
         m.put("avatar", u.getAvatar());

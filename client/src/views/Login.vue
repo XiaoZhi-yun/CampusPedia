@@ -18,7 +18,7 @@
         <el-tab-pane label="注册" name="register">
           <el-form :model="regForm" :rules="regRules" ref="regRef" @submit.prevent>
             <el-form-item prop="studentNo"><el-input v-model="regForm.studentNo" placeholder="学号（4-20位）" /></el-form-item>
-            <el-form-item prop="realName"><el-input v-model="regForm.realName" placeholder="姓名" /></el-form-item>
+            <el-form-item prop="username"><el-input v-model="regForm.username" placeholder="姓名" /></el-form-item>
             <el-form-item prop="major"><el-input v-model="regForm.major" placeholder="专业（如：计算机科学与技术）" /></el-form-item>
             <el-form-item prop="className"><el-input v-model="regForm.className" placeholder="班级（如：计科2301）" /></el-form-item>
             <el-form-item prop="password"><el-input v-model="regForm.password" type="password" placeholder="密码（6-20位）" show-password /></el-form-item>
@@ -43,7 +43,7 @@ const tab = ref('login')
 const loading = ref(false)
 const loginRef = ref(); const regRef = ref()
 const loginForm = reactive({ studentNo: '', password: '' })
-const regForm = reactive({ studentNo: '', realName: '', major: '', className: '', password: '' })
+const regForm = reactive({ studentNo: '', username: '', major: '', className: '', password: '' })
 
 const loginRules = {
   studentNo: [{ required: true, message: '请输入学号', trigger: 'blur' }, { min: 4, max: 20, message: '学号长度需 4-20 位', trigger: 'blur' }],
@@ -51,7 +51,7 @@ const loginRules = {
 }
 const regRules = {
   studentNo: [{ required: true, message: '请输入学号', trigger: 'blur' }, { min: 4, max: 20, message: '学号长度需 4-20 位', trigger: 'blur' }],
-  realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, max: 20, message: '密码长度需 6-20 位', trigger: 'blur' }],
 }
 

@@ -7,7 +7,7 @@
           <el-button text @click="$router.push('/profile')">个人中心</el-button>
           <el-button v-if="auth.role === 'admin'" text @click="$router.push('/admin')">管理后台</el-button>
           <el-button text @click="toggleDark">{{ dark ? "☀️" : "🌙" }}</el-button>
-          <span class="user">{{ auth.realName || auth.studentNo }}</span>
+          <span class="user">{{ auth.username || auth.studentNo }}</span>
           <el-button text @click="logout">退出</el-button>
         </template>
         <template v-else>
@@ -37,7 +37,6 @@
       </aside>
 
       <div class="chat-area">
-        <div v-if="!auth.token" class="guest-banner">👋 游客模式：聊天不保存记录 · 登录后保存历史、管理员可进后台</div>
         <div v-if="notices.length" class="notice-banner">
           <span v-for="n in notices" :key="n.id" class="notice-item">📢 {{ n.title }}</span>
         </div>
@@ -47,16 +46,14 @@
             <div class="hint-btns">
               <el-button v-for="f in faqs" :key="f.id" size="small" @click="send(f.question)">{{ f.question }}</el-button>
             </div>
-            <p class="hint-title" style="margin-top:16px">猜你想问</p>
+            <p v-if="hot.length" class="hint-title" style="margin-top:16px">猜你想问</p>
             <div class="hint-btns">
-              <el-button size="small" @click="send('转专业需要什么条件？')">转专业需要什么条件？</el-button>
-              <el-button size="small" @click="send('国家奖学金怎么申请？')">国家奖学金怎么申请？</el-button>
-              <el-button size="small" @click="send('宿舍怎么申请调换？')">宿舍怎么申请调换？</el-button>
+              <el-button v-for="h in hot" :key="h.question" size="small" @click="send(h.question)">{{ h.question }}</el-button>
             </div>
           </div>
 
           <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
-            <div class="avatar" :style="m.role === 'user' ? { background: AVATAR_COLORS[auth.avatar] || AVATAR_COLORS.p1 } : {}">{{ m.role === 'user' ? (auth.realName ? auth.realName[0] : '我') : '通' }}</div>
+            <div class="avatar" :style="m.role === 'user' ? { background: AVATAR_COLORS[auth.avatar] || AVATAR_COLORS.p1 } : {}">{{ m.role === 'user' ? (auth.username ? auth.username[0] : '我') : '通' }}</div>
             <div class="body">
               <div class="bubble" @click="onCiteClick($event)">
                 <div v-if="m.role === 'assistant' && m.content" v-html="m.html"></div>
@@ -116,6 +113,7 @@ const md = new MarkdownIt()
 const messages = ref<any[]>([])
 const sessions = ref<any[]>([])
 const faqs = ref<any[]>([])
+const hot = ref<any[]>([])
 const notices = ref<any[]>([])
 const currentSessionId = ref<number | null>(null)
 const sessionKw = ref('')
@@ -147,6 +145,9 @@ async function loadSessions() {
 }
 async function loadFaqs() {
   try { const r = await request.get('/faq') as any; if (r.code === 200) faqs.value = r.data || [] } catch {}
+}
+async function loadHot() {
+  try { const r = await request.get('/stats/topQuestions') as any; if (r.code === 200) hot.value = (r.data || []).slice(0, 3) } catch {}
 }
 async function loadNotices() {
   try { const r = await request.get('/notice') as any; if (r.code === 200) notices.value = r.data || [] } catch {}
@@ -200,7 +201,7 @@ async function send(q?: string) {
   loading.value = true
   const history = messages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
   messages.value.push({ role: 'user', content: question, html: '', sources: [], trace: null, fb: null })
-  messages.value.push({ role: 'assistant', content: '', html: '', sources: [], trace: null, fb: null })
+  messages.value.push({ role: 'assistant', content: '', html: '', sources: [], trace: null, fb: null, question })
   const aiIdx = messages.value.length - 1
 
   if (auth.token && !currentSessionId.value) {
@@ -212,7 +213,7 @@ async function send(q?: string) {
 
   abortCtrl = new AbortController()
   try {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token) headers.Authorization = 'Bearer ' + token
     const resp = await fetch('/api/chat/stream', {
@@ -259,10 +260,14 @@ function regenerate(m: any) {
   }
 }
 
-function feedback(m: any, rating: number) {
+async function feedback(m: any, rating: number) {
   if (!auth.token) { ElMessage.warning('请先登录后再反馈'); return }
+  let comment = ''
+  if (rating === 0) {
+    try { const { value } = await ElMessageBox.prompt('请说说哪里不好，帮我们改进', '反馈建议', { confirmButtonText: '提交', cancelButtonText: '取消' }); comment = value || '' } catch { return }
+  }
   m.fb = rating === 1 ? 'up' : 'down'
-  request.post('/feedback', { rating }).then(() => ElMessage.success('感谢反馈')).catch(() => { ElMessage.error('反馈失败'); m.fb = null })
+  request.post('/feedback', { rating, comment, question: m.question || '' }).then(() => ElMessage.success('感谢反馈')).catch(() => { ElMessage.error('反馈失败'); m.fb = null })
 }
 
 function onCiteClick(e: Event) {
@@ -298,7 +303,7 @@ function fmtIndices(indices: number[]) { return indices.map(i => '[' + i + ']').
 function scrollBottom() { nextTick(() => { if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight }) }
 
 onMounted(async () => {
-  loadFaqs(); loadNotices()
+  loadFaqs(); loadNotices(); loadHot()
   await loadSessions()
   const sid = route.query.sessionId
   if (sid && auth.token) openSession(Number(sid))

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-/** t_user 实体。 */
+/** t_user 实体。username=姓名，studentNo=学号。 */
 @Data
 @TableName("t_user")
 public class User {
@@ -15,7 +15,6 @@ public class User {
     private String studentNo;
     private String username;
     private String password;
-    private String realName;
     private String major;
     private String className;
     private String role;

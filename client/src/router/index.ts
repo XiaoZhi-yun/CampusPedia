@@ -4,8 +4,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: () => import('../views/Login.vue') },
-    { path: '/profile', name: 'profile', component: () => import('../views/Profile.vue') },
     { path: '/', name: 'chat', component: () => import('../views/Chat.vue') },
+    { path: '/profile', name: 'profile', component: () => import('../views/Profile.vue') },
     { path: '/admin', name: 'admin', component: () => import('../views/admin/Home.vue') },
     { path: '/admin/knowledge', name: 'knowledge', component: () => import('../views/admin/Knowledge.vue') },
     { path: '/admin/config', name: 'config', component: () => import('../views/admin/Config.vue') },
@@ -17,10 +17,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const token = localStorage.getItem('token')
-  const role = localStorage.getItem('role')
+  const token = sessionStorage.getItem('token')
+  const role = sessionStorage.getItem('role')
+  if (to.path === '/login') return true
+  if (!token) return '/login'
   if (to.path.startsWith('/admin')) {
-    if (!token) return '/login'
     if (role !== 'admin') return '/'
   }
   return true

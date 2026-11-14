@@ -14,6 +14,7 @@ public class Feedback {
     private Long id;
     private Long messageId;
     private Long userId;
+    private String question;
     private Integer rating;
     private String comment;
     private LocalDateTime createTime;

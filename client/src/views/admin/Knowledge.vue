@@ -9,23 +9,33 @@
         <h3>上传文档</h3>
         <div class="upload-row">
           <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" @change="onFile" />
-          <el-select v-model="categoryId" placeholder="选择分类" size="default" style="width:180px">
+          <el-select v-model="categoryId" placeholder="请选择语料分类" size="default" style="width:180px">
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+            <el-option label="其他" :value="0" />
           </el-select>
           <el-input v-model="sourceUrl" placeholder="官网原文链接（可选）" style="width:280px" />
           <el-button type="primary" :disabled="!file || busy" @click="upload">{{ busy ? '上传中…' : '上传' }}</el-button>
+          <el-button @click="clearForm">清除</el-button>
         </div>
+        <p class="type-hint">支持文件类型：.md / .txt / .pdf / .doc / .docx</p>
         <p v-if="msg" class="msg">{{ msg }}</p>
       </el-card>
 
       <el-card style="margin-top:16px">
-        <h3>文档列表（{{ docs.length }}）
+        <div style="margin:12px 0;display:flex;gap:8px;align-items:center">
+          <span style="font-size:13px;color:#666">按分类筛选：</span>
+          <el-select v-model="filterCat" placeholder="全部" size="small" style="width:160px" clearable>
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+            <el-option label="其他" :value="0" />
+          </el-select>
+        </div>
+        <h3>文档列表（{{ filteredDocs.length }}）
         <span style="float:right">
           <el-button size="small" :disabled="!sel.length" @click="batchVectorize">批量向量化（{{ sel.length }}）</el-button>
           <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button>
         </span>
       </h3>
-        <el-table :data="docs" size="small" @selection-change="(s: any) => sel = s">
+        <el-table :data="filteredDocs" size="small" @selection-change="(s: any) => sel = s">
           <el-table-column type="selection" width="40" />
           <el-table-column prop="id" label="ID" width="70" align="center" />
           <el-table-column prop="fileName" label="文件名" min-width="200" />
@@ -57,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import request from '../../api/request'
 import { ElMessage } from 'element-plus'
 
@@ -67,6 +77,11 @@ const sel = ref<any[]>([])
 const chunks = ref<any[]>([])
 const chunksVisible = ref(false)
 const categoryId = ref<number>(0)
+const filterCat = ref<number | null>(null)
+const filteredDocs = computed(() => {
+  if (filterCat.value === null || filterCat.value === undefined) return docs.value
+  return docs.value.filter((d: any) => d.categoryId === filterCat.value)
+})
 const file = ref<File | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
 const sourceUrl = ref('')
@@ -74,6 +89,7 @@ const busy = ref(false)
 const msg = ref('')
 
 function onFile(e: any) { file.value = e.target.files?.[0] || null }
+function clearForm() { file.value = null; if (fileRef.value) fileRef.value.value = ''; sourceUrl.value = ''; categoryId.value = 0 }
 
 async function loadCats() { try { const r = await request.get('/kb/categories') as any; if (r.code === 200) categories.value = r.data || [] } catch {} }
 function catName(id: any) { const c = categories.value.find((x: any) => x.id === id); return c ? c.name : '-' }
@@ -136,6 +152,7 @@ onMounted(() => { load(); loadCats() })
 .content { padding: 20px; }
 .upload-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
 .msg { margin-top: 8px; font-size: 13px; }
+.type-hint { margin-top: 8px; font-size: 12px; color: #999; }
 .chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
 .chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
 .chunk-head .clause { color: #4f46e5; }

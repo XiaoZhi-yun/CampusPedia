@@ -34,7 +34,8 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/chat/**", "/api/health").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/health").permitAll()
+                        .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/faq/**", "/api/notice/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/faq/**", "/api/notice/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/faq/**").hasRole("ADMIN")

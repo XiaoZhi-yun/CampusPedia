@@ -1,6 +1,6 @@
 <template>
   <div class="admin-page">
-    <header class="topbar"><div class="brand">FAQ 常见问题</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
+    <header class="topbar"><div class="brand">常见问题管理</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
     <div class="content">
       <el-card>
         <div style="margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
