@@ -68,9 +68,9 @@ public class RagChain {
                 emit(emitter, "trace", Map.of("note", "问候语，无需检索"));
                 StringBuilder greet = new StringBuilder();
                 llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。", delta -> { greet.append(delta); emit(emitter, "delta", delta); });
-                saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 emit(emitter, "done", null);
                 emitter.complete();
+                saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 return;
             }
 
@@ -105,9 +105,9 @@ public class RagChain {
                 emit(emitter, "delta", delta);
             });
 
-            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
             emit(emitter, "done", null);
             emitter.complete();
+            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
             emit(emitter, "error", e.getMessage());
             emitter.complete();

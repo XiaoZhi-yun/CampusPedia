@@ -74,8 +74,8 @@
 
         <div class="input-bar">
           <el-input v-model="input" placeholder="输入你的校园问题…" :disabled="loading" @keyup.enter="send()" />
-          <el-button v-if="loading" type="danger" plain @click="stop()">停止</el-button>
-          <el-button type="primary" :disabled="loading || !input.trim()" @click="send()">{{ loading ? '…' : '发送' }}</el-button>
+          <el-button v-if="loading" type="danger" @click="stop()">停止</el-button>
+          <el-button v-else type="primary" :disabled="!input.trim()" @click="send()">发送</el-button>
         </div>
       </div>
     </div>
