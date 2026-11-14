@@ -38,7 +38,7 @@
       <el-card class="session-card">
         <h3>我的会话记录（{{ sessions.length }}）</h3>
         <el-empty v-if="sessions.length === 0" description="暂无会话" :image-size="60" />
-        <div v-for="s in sessions" :key="s.id" class="session-item" @click="$router.push('/')">
+        <div v-for="s in sessions" :key="s.id" class="session-item" @click="$router.push({ path: '/', query: { sessionId: s.id } })">
           <span class="stitle">{{ s.title }}</span>
           <span class="scount">{{ s.messageCount || 0 }} 条消息</span>
         </div>
@@ -51,9 +51,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
+import { useRouter } from 'vue-router'
 import request from '../api/request'
 
 const auth = useAuthStore()
+const router = useRouter()
 const sessions = ref<any[]>([])
 const pwdVisible = ref(false)
 const pwdForm = reactive({ oldPassword: '', newPassword: '' })
@@ -79,7 +81,7 @@ async function changePwd() {
   if (!pwdForm.oldPassword || !pwdForm.newPassword) { ElMessage.warning('请填写完整'); return }
   try {
     const r = await request.put('/profile/password', pwdForm) as any
-    if (r.code === 200) { ElMessage.success('密码已修改'); pwdVisible.value = false; pwdForm.oldPassword = ''; pwdForm.newPassword = '' }
+    if (r.code === 200) { ElMessage.success('密码已修改，请重新登录'); pwdVisible.value = false; auth.logout(); router.push('/login') }
     else ElMessage.error(r.msg || '修改失败')
   } catch (e: any) { ElMessage.error(e?.response?.data?.msg || '修改失败') }
 }

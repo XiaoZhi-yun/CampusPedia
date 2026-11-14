@@ -3,7 +3,7 @@
     <header class="topbar"><div class="brand">公告管理</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
     <div class="content">
       <el-card>
-        <div style="margin-bottom:12px;display:flex;gap:8px">
+        <div style="margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <el-input v-model="form.title" placeholder="公告标题" style="width:280px" />
           <el-input v-model="form.content" placeholder="公告内容" style="width:400px" />
           <el-button type="primary" @click="save">发布</el-button>

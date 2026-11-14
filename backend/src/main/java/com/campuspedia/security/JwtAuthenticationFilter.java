@@ -1,5 +1,7 @@
 package com.campuspedia.security;
 
+import com.campuspedia.entity.User;
+import com.campuspedia.mapper.UserMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,16 +17,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 解析 Authorization: Bearer token，注入 SecurityContext（无 token 或无效则匿名）。
- */
+/** 解析 token 并实时查库：禁用用户拦截、角色变更即时生效。 */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserMapper userMapper;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserMapper userMapper) {
         this.jwtUtil = jwtUtil;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -34,14 +36,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (auth != null && auth.startsWith("Bearer ")) {
             try {
                 Claims claims = jwtUtil.parse(auth.substring(7));
-                String role = claims.get("role", String.class);
-                String username = claims.get("username", String.class);
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
-                var authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
-                authentication.setDetails(Map.of("userId", Long.valueOf(claims.getSubject())));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                Long userId = Long.valueOf(claims.getSubject());
+                User user = userMapper.selectById(userId);
+                if (user != null && user.getStatus() != null && user.getStatus() == 1) {
+                    String role = user.getRole();
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                    var authentication = new UsernamePasswordAuthenticationToken(user.getStudentNo(), null, authorities);
+                    authentication.setDetails(Map.of("userId", userId));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } catch (Exception ignore) {
-                // token 无效 → 匿名
             }
         }
         chain.doFilter(request, response);

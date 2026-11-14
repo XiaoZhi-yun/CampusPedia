@@ -3,7 +3,7 @@
     <header class="topbar"><div class="brand">FAQ 常见问题</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
     <div class="content">
       <el-card>
-        <div style="margin-bottom:12px;display:flex;gap:8px">
+        <div style="margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <el-input v-model="form.question" placeholder="问题" style="width:280px" />
           <el-input v-model="form.answer" placeholder="答案" style="width:400px" />
           <el-button type="primary" @click="save">{{ editingId ? '更新' : '新增' }}</el-button>

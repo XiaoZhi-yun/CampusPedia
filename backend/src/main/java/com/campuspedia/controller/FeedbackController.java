@@ -1,5 +1,6 @@
 package com.campuspedia.controller;
 
+import com.campuspedia.common.BizException;
 import com.campuspedia.common.Result;
 import com.campuspedia.entity.Feedback;
 import com.campuspedia.mapper.FeedbackMapper;
@@ -25,7 +26,10 @@ public class FeedbackController {
     @PostMapping
     public Result<Void> submit(@RequestBody Feedback feedback, HttpServletRequest request) {
         Long userId = authHelper.currentUserId(request);
-        feedback.setUserId(userId == null ? 0L : userId);
+        if (userId == null) throw new BizException(401, "请先登录后再反馈");
+        feedback.setUserId(userId);
+        if (feedback.getMessageId() == null) feedback.setMessageId(0L);
+        if (feedback.getRating() == null) feedback.setRating(1);
         feedbackMapper.insert(feedback);
         return Result.ok(null);
     }

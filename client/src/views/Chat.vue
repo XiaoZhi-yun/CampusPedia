@@ -56,7 +56,7 @@
           </div>
 
           <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
-            <div class="avatar">{{ m.role === 'user' ? (auth.realName ? auth.realName[0] : '我') : '通' }}</div>
+            <div class="avatar" :style="m.role === 'user' ? { background: AVATAR_COLORS[auth.avatar] || AVATAR_COLORS.p1 } : {}">{{ m.role === 'user' ? (auth.realName ? auth.realName[0] : '我') : '通' }}</div>
             <div class="body">
               <div class="bubble" @click="onCiteClick($event)">
                 <div v-if="m.role === 'assistant' && m.content" v-html="m.html"></div>
@@ -103,13 +103,14 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import request from '../api/request'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const md = new MarkdownIt()
 const messages = ref<any[]>([])
@@ -123,6 +124,7 @@ const loading = ref(false)
 const listRef = ref<HTMLElement | null>(null)
 let abortCtrl: AbortController | null = null
 const dark = ref(false)
+const AVATAR_COLORS: Record<string, string> = { p1: '#4f46e5', p2: '#0ea5e9', p3: '#10b981', p4: '#f59e0b', p5: '#ef4444', p6: '#8b5cf6', p7: '#ec4899', p8: '#14b8a6' }
 function toggleDark() { dark.value = !dark.value; document.documentElement.classList.toggle('dark', dark.value) }
 
 const filteredSessions = computed(() => {
@@ -258,8 +260,9 @@ function regenerate(m: any) {
 }
 
 function feedback(m: any, rating: number) {
+  if (!auth.token) { ElMessage.warning('请先登录后再反馈'); return }
   m.fb = rating === 1 ? 'up' : 'down'
-  request.post('/feedback', { rating }).catch(() => {})
+  request.post('/feedback', { rating }).then(() => ElMessage.success('感谢反馈')).catch(() => { ElMessage.error('反馈失败'); m.fb = null })
 }
 
 function onCiteClick(e: Event) {
@@ -294,7 +297,12 @@ function fmtIndices(indices: number[]) { return indices.map(i => '[' + i + ']').
 
 function scrollBottom() { nextTick(() => { if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight }) }
 
-onMounted(() => { loadSessions(); loadFaqs(); loadNotices() })
+onMounted(async () => {
+  loadFaqs(); loadNotices()
+  await loadSessions()
+  const sid = route.query.sessionId
+  if (sid && auth.token) openSession(Number(sid))
+})
 </script>
 
 <style scoped>

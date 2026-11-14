@@ -76,6 +76,9 @@ public class AuthController {
         if (u == null || !passwordEncoder.matches(password, u.getPassword())) {
             throw new BizException(401, "学号或密码错误");
         }
+        if (u.getStatus() != null && u.getStatus() == 0) {
+            throw new BizException(403, "账号已被禁用，请联系管理员");
+        }
         return Result.ok(loginResult(u), "登录成功");
     }
 
