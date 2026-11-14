@@ -6,6 +6,7 @@
         <template v-if="auth.token">
           <el-button text @click="$router.push('/profile')">个人中心</el-button>
           <el-button v-if="auth.role === 'admin'" text @click="$router.push('/admin')">管理后台</el-button>
+          <el-button text @click="toggleDark">{{ dark ? "☀️" : "🌙" }}</el-button>
           <span class="user">{{ auth.realName || auth.studentNo }}</span>
           <el-button text @click="logout">退出</el-button>
         </template>
@@ -121,6 +122,8 @@ const input = ref('')
 const loading = ref(false)
 const listRef = ref<HTMLElement | null>(null)
 let abortCtrl: AbortController | null = null
+const dark = ref(false)
+function toggleDark() { dark.value = !dark.value; document.documentElement.classList.toggle('dark', dark.value) }
 
 const filteredSessions = computed(() => {
   const kw = sessionKw.value.trim()
@@ -342,4 +345,16 @@ onMounted(() => { loadSessions(); loadFaqs(); loadNotices() })
 .src .clause { color: #888; font-size: 12px; }
 .src-snippet { margin-top: 6px; font-size: 12px; color: #666; line-height: 1.6; border-left: 2px solid #e5e7eb; padding-left: 8px; }
 .input-bar { display: flex; gap: 8px; padding: 12px 20px; background: #fff; border-top: 1px solid #eee; }
+:global(.dark) .chat-page { background: #1f2937; }
+:global(.dark) .chat-area, :global(.dark) .msg-list { background: #111827; }
+:global(.dark) .bubble { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+:global(.dark) .sidebar, :global(.dark) .input-bar { background: #1f2937; border-color: #374151; }
+:global(.dark) .session-item { color: #d1d5db; }
+:global(.dark) .src { background: #1f2937; border-color: #374151; color: #d1d5db; }
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .body { max-width: 92%; }
+  .topbar { padding: 10px 14px; }
+  .msg-list { padding: 12px; }
+}
 </style>
