@@ -12,11 +12,11 @@
           <el-table-column prop="className" label="班级" width="120" />
           <el-table-column label="角色" width="110">
             <template #default="{ row }">
-              <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" style="width:80px;text-align:center;display:inline-block">{{ row.role === 'admin' ? '管理员' : '普通用户' }}</el-tag>
+              <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" style="width:80px;display:inline-flex;align-items:center;justify-content:center">{{ row.role === 'admin' ? '管理员' : '普通用户' }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="状态" width="90">
-            <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag></template>
+            <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'danger'" style="width:56px;display:inline-flex;align-items:center;justify-content:center">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag></template>
           </el-table-column>
           <el-table-column label="操作" width="220">
             <template #default="{ row }">
