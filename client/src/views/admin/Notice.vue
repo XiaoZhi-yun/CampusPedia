@@ -1,7 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar"><div class="brand">公告管理</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">公告管理</h2>
       <el-card>
         <div style="margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <el-input v-model="form.title" placeholder="公告标题" style="width:280px" />

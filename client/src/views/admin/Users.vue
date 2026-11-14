@@ -1,7 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar"><div class="brand">用户管理</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">用户管理</h2>
       <el-card>
         <el-table :data="users" size="small">
           <el-table-column prop="id" label="ID" width="60" />

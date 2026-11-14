@@ -1,10 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar">
-      <div class="brand">参数配置</div>
-      <div><el-button text @click="$router.push('/')">返回问答</el-button></div>
-    </header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">参数配置</h2>
       <el-card>
         <el-table :data="configs" size="small">
           <el-table-column label="配置项" width="220">

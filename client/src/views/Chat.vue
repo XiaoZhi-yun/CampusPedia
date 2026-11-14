@@ -1,20 +1,6 @@
 <template>
   <div class="chat-page">
-    <header class="topbar">
-      <div class="brand">学事通 <span class="en">CampusPedia</span></div>
-      <div class="actions">
-        <template v-if="auth.token">
-          <el-button text @click="$router.push('/profile')">个人中心</el-button>
-          <el-button v-if="auth.role === 'admin'" text @click="$router.push('/admin')">管理后台</el-button>
-          <el-button text @click="toggleDark">{{ dark ? "☀️" : "🌙" }}</el-button>
-          <span class="user">{{ auth.username || auth.studentNo }}</span>
-          <el-button text @click="logout">退出</el-button>
-        </template>
-        <template v-else>
-          <el-button text @click="$router.push('/login')">登录 / 注册</el-button>
-        </template>
-      </div>
-    </header>
+    <NavBar />
 
     <div class="main">
       <aside v-if="auth.token" class="sidebar">
@@ -68,9 +54,6 @@
                 <el-button size="small" text :type="m.fb === 'up' ? 'primary' : ''" @click="feedback(m, 1)">👍 有用</el-button>
                 <el-button size="small" text :type="m.fb === 'down' ? 'danger' : ''" @click="feedback(m, 0)">👎 无用</el-button>
               </div>
-              <div v-if="loading && i === messages.length - 1" class="op-bar">
-                <el-button size="small" text @click="stop()">⏹ 停止生成</el-button>
-              </div>
 
               <el-collapse v-if="m.sources && m.sources.length" class="sources">
                 <el-collapse-item :title="'📎 参考来源（' + m.sources.length + ' 条）'" name="1">
@@ -91,6 +74,7 @@
 
         <div class="input-bar">
           <el-input v-model="input" placeholder="输入你的校园问题…" :disabled="loading" @keyup.enter="send()" />
+          <el-button v-if="loading" type="danger" plain @click="stop()">停止</el-button>
           <el-button type="primary" :disabled="loading || !input.trim()" @click="send()">{{ loading ? '…' : '发送' }}</el-button>
         </div>
       </div>
@@ -311,12 +295,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.chat-page { height: 100vh; display: flex; flex-direction: column; }
-.topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,.15); }
-.topbar .brand { color: #fff; }
-.topbar .brand .en { color: rgba(255,255,255,.75); }
-.topbar .user { color: rgba(255,255,255,.85); }
-.topbar :deep(.el-button.is-text) { color: rgba(255,255,255,.9); }
+.chat-page { height: 100vh; display: flex; flex-direction: column; background: #f7f8fa; }
 .main { flex: 1; display: flex; min-height: 0; }
 .sidebar { width: 230px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; }
 .sidebar-head { padding: 12px; border-bottom: 1px solid #f0f0f0; }

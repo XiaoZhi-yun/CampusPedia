@@ -1,10 +1,8 @@
 <template>
   <div class="profile-page">
-    <header class="topbar">
-      <div class="brand">个人中心</div>
-      <div><el-button text @click="$router.push('/')">返回问答</el-button></div>
-    </header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">个人中心</h2>
       <el-card class="info-card">
         <h3>基本信息</h3>
         <div class="avatar-row">

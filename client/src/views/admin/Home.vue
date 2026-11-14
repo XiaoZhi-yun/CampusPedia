@@ -1,10 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar">
-      <div class="brand">管理后台 · 数据大屏</div>
-      <div><el-button text @click="$router.push('/')">返回问答</el-button></div>
-    </header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">数据大屏</h2>
       <div class="cards">
         <el-card class="stat-card" shadow="hover"><div class="num" style="color:#4f46e5">{{ ov.documents ?? '-' }}</div><div class="label">语料文档</div></el-card>
         <el-card class="stat-card" shadow="hover"><div class="num" style="color:#0ea5e9">{{ ov.users ?? '-' }}</div><div class="label">注册用户</div></el-card>

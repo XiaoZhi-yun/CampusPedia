@@ -1,10 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar">
-      <div class="brand">语料管理</div>
-      <div><el-button text @click="$router.push('/')">返回问答</el-button></div>
-    </header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">语料管理</h2>
       <el-card>
         <h3>上传文档</h3>
         <div class="upload-row">

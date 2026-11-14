@@ -1,7 +1,8 @@
 <template>
   <div class="admin-page">
-    <header class="topbar"><div class="brand">常见问题管理</div><div><el-button text @click="$router.push('/')">返回问答</el-button></div></header>
+    <NavBar />
     <div class="content">
+    <h2 class="page-title">常见问题管理</h2>
       <el-card>
         <div style="margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <el-input v-model="form.question" placeholder="问题" style="width:280px" />
