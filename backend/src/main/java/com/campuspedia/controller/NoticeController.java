@@ -28,4 +28,10 @@ public class NoticeController {
         noticeMapper.insert(notice);
         return Result.ok(null);
     }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        noticeMapper.deleteById(id);
+        return Result.ok(null);
+    }
 }

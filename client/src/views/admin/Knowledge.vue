@@ -8,7 +8,10 @@
       <el-card>
         <h3>上传文档</h3>
         <div class="upload-row">
-          <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.docx" @change="onFile" />
+          <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" @change="onFile" />
+          <el-select v-model="categoryId" placeholder="选择分类" size="default" style="width:180px">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+          </el-select>
           <el-input v-model="sourceUrl" placeholder="官网原文链接（可选）" style="width:280px" />
           <el-button type="primary" :disabled="!file || busy" @click="upload">{{ busy ? '上传中…' : '上传' }}</el-button>
         </div>
@@ -16,10 +19,12 @@
       </el-card>
 
       <el-card style="margin-top:16px">
-        <h3>文档列表（{{ docs.length }}）</h3>
-        <el-table :data="docs" size="small">
+        <h3>文档列表（{{ docs.length }}）<el-button size="small" type="danger" style="float:right" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button></h3>
+        <el-table :data="docs" size="small" @selection-change="(s: any) => sel = s">
+          <el-table-column type="selection" width="40" />
           <el-table-column prop="id" label="ID" width="70" align="center" />
-          <el-table-column prop="fileName" label="文件名" min-width="220" />
+          <el-table-column prop="fileName" label="文件名" min-width="200" />
+          <el-table-column label="分类" width="140"><template #default="{ row }">{{ catName(row.categoryId) }}</template></el-table-column>
           <el-table-column prop="vectorStatus" label="状态" width="100" align="center">
             <template #default="{ row }">
               <el-tag :type="row.vectorStatus === 'done' ? 'success' : 'warning'">{{ row.vectorStatus === 'done' ? '已入库' : '待处理' }}</el-tag>
@@ -43,6 +48,9 @@ import { ref, onMounted } from 'vue'
 import request from '../../api/request'
 
 const docs = ref<any[]>([])
+const categories = ref<any[]>([])
+const sel = ref<any[]>([])
+const categoryId = ref<number>(0)
 const file = ref<File | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
 const sourceUrl = ref('')
@@ -51,6 +59,12 @@ const msg = ref('')
 
 function onFile(e: any) { file.value = e.target.files?.[0] || null }
 
+async function loadCats() { try { const r = await request.get('/kb/categories') as any; if (r.code === 200) categories.value = r.data || [] } catch {} }
+function catName(id: any) { const c = categories.value.find((x: any) => x.id === id); return c ? c.name : '-' }
+async function batchDelete() {
+  for (const row of sel.value) await request.delete('/kb/documents/' + row.id)
+  load()
+}
 async function load() {
   const res = await request.get('/kb/documents') as any
   if (res.code === 200) docs.value = res.data || []
@@ -61,7 +75,7 @@ async function upload() {
   busy.value = true
   const fd = new FormData()
   fd.append('file', file.value)
-  fd.append('categoryId', '0')
+  fd.append('categoryId', String(categoryId.value))
   if (sourceUrl.value.trim()) fd.append('sourceUrl', sourceUrl.value.trim())
   try {
     const res = await request.post('/kb/documents', fd) as any
@@ -86,7 +100,7 @@ async function remove(row: any) {
   load()
 }
 
-onMounted(load)
+onMounted(() => { load(); loadCats() })
 </script>
 
 <style scoped>

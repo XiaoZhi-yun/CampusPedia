@@ -18,9 +18,21 @@
         <el-card shadow="hover"><div ref="pieRef" style="height:320px"></div></el-card>
       </div>
 
-      <div style="margin-top:16px;display:flex;gap:12px">
+      <el-card shadow="hover" style="margin-top:16px">
+        <h3 style="margin-top:0">热门问题 TOP10</h3>
+        <el-table :data="hot" size="small">
+          <el-table-column type="index" label="#" width="50" />
+          <el-table-column prop="question" label="问题" />
+          <el-table-column prop="count" label="提问次数" width="100" />
+        </el-table>
+      </el-card>
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
         <el-button type="primary" @click="$router.push('/admin/knowledge')">语料管理</el-button>
         <el-button @click="$router.push('/admin/config')">参数配置</el-button>
+        <el-button @click="$router.push('/admin/users')">用户管理</el-button>
+        <el-button @click="$router.push('/admin/feedback')">反馈管理</el-button>
+        <el-button @click="$router.push('/admin/faq')">FAQ 管理</el-button>
+        <el-button @click="$router.push('/admin/notice')">公告发布</el-button>
       </div>
     </div>
   </div>
@@ -32,6 +44,7 @@ import * as echarts from 'echarts'
 import request from '../../api/request'
 
 const ov = ref<any>({})
+const hot = ref<any[]>([])
 const lineRef = ref<HTMLElement | null>(null)
 const pieRef = ref<HTMLElement | null>(null)
 
@@ -54,6 +67,10 @@ onMounted(async () => {
         series: [{ type: 'line', data: rows.map((r: any) => r.count), smooth: true, areaStyle: { opacity: 0.2 }, itemStyle: { color: '#4f46e5' } }],
       })
     }
+  } catch {}
+  try {
+    const h = await request.get('/stats/topQuestions') as any
+    if (h.code === 200) hot.value = h.data || []
   } catch {}
   try {
     const t = await request.get('/stats/docTypes') as any

@@ -21,7 +21,19 @@
           <div v-for="(c, k) in AVATAR_COLORS" :key="k" class="avatar-opt" :class="{ active: form.avatar === k }" :style="{ background: c }" @click="form.avatar = k">{{ auth.realName ? auth.realName[0] : '学' }}</div>
         </div>
         <el-button type="primary" style="margin-top:20px" @click="save">保存</el-button>
+        <el-button style="margin-top:20px" @click="pwdVisible = true">修改密码</el-button>
       </el-card>
+
+    <el-dialog v-model="pwdVisible" title="修改密码" width="360px">
+      <el-form label-width="80px">
+        <el-form-item label="原密码"><el-input v-model="pwdForm.oldPassword" type="password" show-password /></el-form-item>
+        <el-form-item label="新密码"><el-input v-model="pwdForm.newPassword" type="password" show-password /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pwdVisible = false">取消</el-button>
+        <el-button type="primary" @click="changePwd">确定</el-button>
+      </template>
+    </el-dialog>
 
       <el-card class="session-card">
         <h3>我的会话记录（{{ sessions.length }}）</h3>
@@ -43,6 +55,8 @@ import request from '../api/request'
 
 const auth = useAuthStore()
 const sessions = ref<any[]>([])
+const pwdVisible = ref(false)
+const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const form = reactive({ studentNo: auth.studentNo, realName: auth.realName, major: auth.major, className: auth.className, avatar: auth.avatar })
 
 const AVATAR_COLORS: Record<string, string> = {
@@ -59,6 +73,15 @@ async function load() {
       form.className = p.data.className || ''; form.avatar = p.data.avatar || 'p1'
     }
   } catch {}
+}
+
+async function changePwd() {
+  if (!pwdForm.oldPassword || !pwdForm.newPassword) { ElMessage.warning('请填写完整'); return }
+  try {
+    const r = await request.put('/profile/password', pwdForm) as any
+    if (r.code === 200) { ElMessage.success('密码已修改'); pwdVisible.value = false; pwdForm.oldPassword = ''; pwdForm.newPassword = '' }
+    else ElMessage.error(r.msg || '修改失败')
+  } catch (e: any) { ElMessage.error(e?.response?.data?.msg || '修改失败') }
 }
 
 async function save() {

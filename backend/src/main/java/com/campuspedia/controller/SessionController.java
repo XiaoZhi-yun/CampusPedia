@@ -57,6 +57,16 @@ public class SessionController {
         return Result.ok(messageMapper.selectList(new QueryWrapper<ChatMessage>().eq("session_id", id).orderByAsc("id")));
     }
 
+    @PutMapping("/{id}")
+    public Result<Void> rename(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
+        uid(request);
+        ChatSession s = sessionMapper.selectById(id);
+        if (s == null) throw new BizException("会话不存在");
+        if (body.get("title") != null && !body.get("title").isBlank()) s.setTitle(body.get("title"));
+        sessionMapper.updateById(s);
+        return Result.ok(null);
+    }
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest request) {
         uid(request);

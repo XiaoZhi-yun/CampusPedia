@@ -49,6 +49,11 @@ public class StatsController {
         return Result.ok(documentMapper.countByType());
     }
 
+    @GetMapping("/topQuestions")
+    public Result<List<Map<String, Object>>> topQuestions() {
+        return Result.ok(messageMapper.topQuestions());
+    }
+
     @GetMapping("/daily")
     public Result<List<Map<String, Object>>> daily() {
         return Result.ok(messageMapper.countByDay());

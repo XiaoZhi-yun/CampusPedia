@@ -1,6 +1,8 @@
 package com.campuspedia.controller;
 
 import com.campuspedia.rag.RagChain;
+import com.campuspedia.entity.SysLog;
+import com.campuspedia.mapper.SysLogMapper;
 import com.campuspedia.security.AuthHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,10 +22,12 @@ public class ChatController {
 
     private final RagChain ragChain;
     private final AuthHelper authHelper;
+    private final SysLogMapper sysLogMapper;
 
-    public ChatController(RagChain ragChain, AuthHelper authHelper) {
+    public ChatController(RagChain ragChain, AuthHelper authHelper, SysLogMapper sysLogMapper) {
         this.ragChain = ragChain;
         this.authHelper = authHelper;
+        this.sysLogMapper = sysLogMapper;
     }
 
     @PostMapping("/chat/stream")
@@ -31,6 +35,15 @@ public class ChatController {
         String question = String.valueOf(body.getOrDefault("question", ""));
         Long sessionId = body.get("sessionId") == null ? null : Long.valueOf(String.valueOf(body.get("sessionId")));
         Long userId = authHelper.currentUserId(request);
+        try {
+            SysLog l = new SysLog();
+            l.setUsername(userId == null ? "游客" : String.valueOf(userId));
+            l.setRole("user");
+            l.setAction("chat");
+            l.setDetail(question.length() > 200 ? question.substring(0, 200) : question);
+            l.setIp(request.getRemoteAddr());
+            sysLogMapper.insert(l);
+        } catch (Exception ignore) {}
         SseEmitter emitter = new SseEmitter(120_000L);
         CompletableFuture.runAsync(() -> ragChain.stream(question, parseHistory(body.get("history")), sessionId, userId, emitter));
         return emitter;

@@ -13,4 +13,7 @@ public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
 
     @Select("SELECT DATE(create_time) AS day, COUNT(*) AS count FROM t_chat_message WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY DATE(create_time) ORDER BY day")
     List<Map<String, Object>> countByDay();
+
+    @Select("SELECT content AS question, COUNT(*) AS count FROM t_chat_message WHERE role = 'user' GROUP BY content ORDER BY count DESC LIMIT 10")
+    List<Map<String, Object>> topQuestions();
 }

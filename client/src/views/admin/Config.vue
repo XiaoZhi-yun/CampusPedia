@@ -19,6 +19,7 @@
           <el-table-column prop="remark" label="说明" />
         </el-table>
         <el-button type="primary" style="margin-top:12px" @click="save">保存</el-button>
+        <el-button style="margin-top:12px" @click="resetDefaults">恢复默认值</el-button>
         <p v-if="msg" class="msg">{{ msg }}</p>
       </el-card>
     </div>
@@ -54,6 +55,17 @@ async function load() {
   const res = await request.get('/config') as any
   if (res.code === 200) configs.value = res.data || []
 }
+const DEFAULTS: Record<string, string> = {
+  rag_top_k_recall: '20', rag_top_n_final: '5', rag_score_threshold: '0.3',
+  rerank_enabled: 'true', hybrid_enabled: 'true', query_rewrite_enabled: 'true',
+  temperature: '0.3', history_limit: '6', chunk_size: '500', chunk_overlap: '80',
+  system_prompt: '你是学事通CampusPedia，只依据参考资料回答，资料不足明说，结论后标[1][2]',
+}
+function resetDefaults() {
+  for (const c of configs.value) { if (DEFAULTS[c.configKey] !== undefined) c.configValue = DEFAULTS[c.configKey] }
+  save()
+}
+
 async function save() {
   const res = await request.put('/config', configs.value) as any
   msg.value = res.code === 200 ? '✅ 已保存（实时生效）' : '❌ 保存失败：' + (res.msg || '')
