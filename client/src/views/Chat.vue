@@ -24,7 +24,7 @@
 
       <div class="chat-area">
         <div v-if="notices.length" class="notice-banner">
-          <span v-for="n in notices" :key="n.id" class="notice-item">📢 {{ n.title }}</span>
+          <span v-for="n in notices" :key="n.id" class="notice-item">📢 <b>{{ n.title }}</b>：{{ n.content }}</span>
         </div>
         <div class="msg-list" ref="listRef">
           <div v-if="messages.length === 0" class="hint">
