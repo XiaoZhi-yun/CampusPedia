@@ -1,7 +1,10 @@
 package com.campuspedia.controller;
 
 import com.campuspedia.common.Result;
+import com.campuspedia.entity.DocChunk;
 import com.campuspedia.entity.KbDocument;
+import com.campuspedia.mapper.DocChunkMapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.campuspedia.service.KnowledgeService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +22,11 @@ import java.util.List;
 public class KnowledgeController {
 
     private final KnowledgeService knowledgeService;
+    private final DocChunkMapper chunkMapper;
 
-    public KnowledgeController(KnowledgeService knowledgeService) {
+    public KnowledgeController(KnowledgeService knowledgeService, DocChunkMapper chunkMapper) {
         this.knowledgeService = knowledgeService;
+        this.chunkMapper = chunkMapper;
     }
 
     @PostMapping("/documents")
@@ -44,6 +49,18 @@ public class KnowledgeController {
     @GetMapping("/documents")
     public Result<List<KbDocument>> list() {
         return Result.ok(knowledgeService.list());
+    }
+
+    @GetMapping("/documents/{id}/chunks")
+    public Result<List<DocChunk>> chunks(@PathVariable Long id) {
+        return Result.ok(chunkMapper.selectList(new QueryWrapper<DocChunk>().eq("document_id", id).orderByAsc("chunk_index")));
+    }
+
+    @PostMapping("/documents/batch-vectorize")
+    public Result<Void> batchVectorize(@RequestBody Map<String, Object> body) {
+        List<Long> ids = ((List<?>) body.get("ids")).stream().map(o -> Long.valueOf(String.valueOf(o))).toList();
+        for (Long id : ids) knowledgeService.vectorize(id);
+        return Result.ok(null);
     }
 
     @DeleteMapping("/documents/{id}")

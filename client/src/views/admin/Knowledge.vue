@@ -19,7 +19,12 @@
       </el-card>
 
       <el-card style="margin-top:16px">
-        <h3>文档列表（{{ docs.length }}）<el-button size="small" type="danger" style="float:right" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button></h3>
+        <h3>文档列表（{{ docs.length }}）
+        <span style="float:right">
+          <el-button size="small" :disabled="!sel.length" @click="batchVectorize">批量向量化（{{ sel.length }}）</el-button>
+          <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button>
+        </span>
+      </h3>
         <el-table :data="docs" size="small" @selection-change="(s: any) => sel = s">
           <el-table-column type="selection" width="40" />
           <el-table-column prop="id" label="ID" width="70" align="center" />
@@ -33,6 +38,7 @@
           <el-table-column prop="chunkCount" label="切片数" width="90" align="center" />
           <el-table-column label="操作" width="210" align="center">
             <template #default="{ row }">
+              <el-button size="small" @click="preview(row)">预览切片</el-button>
               <el-button size="small" @click="vectorize(row.id)">重新向量化</el-button>
               <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
             </template>
@@ -40,16 +46,26 @@
         </el-table>
       </el-card>
     </div>
+
+    <el-dialog v-model="chunksVisible" title="切片预览" width="720px">
+      <div v-for="c in chunks" :key="c.id" class="chunk-item">
+        <div class="chunk-head">#{{ c.chunkIndex }} <span v-if="c.clauseRef" class="clause">{{ c.clauseRef }}</span>（{{ c.charCount }} 字）</div>
+        <div class="chunk-body">{{ c.content }}</div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import request from '../../api/request'
+import { ElMessage } from 'element-plus'
 
 const docs = ref<any[]>([])
 const categories = ref<any[]>([])
 const sel = ref<any[]>([])
+const chunks = ref<any[]>([])
+const chunksVisible = ref(false)
 const categoryId = ref<number>(0)
 const file = ref<File | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
@@ -61,6 +77,16 @@ function onFile(e: any) { file.value = e.target.files?.[0] || null }
 
 async function loadCats() { try { const r = await request.get('/kb/categories') as any; if (r.code === 200) categories.value = r.data || [] } catch {} }
 function catName(id: any) { const c = categories.value.find((x: any) => x.id === id); return c ? c.name : '-' }
+async function batchVectorize() {
+  await request.post('/kb/documents/batch-vectorize', { ids: sel.value.map((r: any) => r.id) })
+  ElMessage.success('已重新向量化 ' + sel.value.length + ' 篇')
+  load()
+}
+async function preview(row: any) {
+  const r = await request.get('/kb/documents/' + row.id + '/chunks') as any
+  chunks.value = r.data || []
+  chunksVisible.value = true
+}
 async function batchDelete() {
   for (const row of sel.value) await request.delete('/kb/documents/' + row.id)
   load()
@@ -110,4 +136,8 @@ onMounted(() => { load(); loadCats() })
 .content { padding: 20px; }
 .upload-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
 .msg { margin-top: 8px; font-size: 13px; }
+.chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
+.chunk-head .clause { color: #4f46e5; }
+.chunk-body { font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
 </style>
