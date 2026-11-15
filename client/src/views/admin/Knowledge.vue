@@ -7,7 +7,7 @@
         <h3>上传文档</h3>
         <div class="upload-row">
           <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" style="display:none" @change="onFile" />
-          <el-button @click="fileRef.click()">选择文件</el-button>
+          <el-button @click="fileRef?.click()">选择文件</el-button>
           <span v-if="file" class="file-name" :title="file.name">📄 {{ file.name }}</span>
           <span v-else class="file-name placeholder">未选择文件</span>
           <el-select v-model="categoryId" placeholder="请选择语料分类" size="default" style="width:180px">
