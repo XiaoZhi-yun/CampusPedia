@@ -52,12 +52,12 @@ onMounted(() => {
 <style scoped>
 .navbar { height: 56px; display: flex; align-items: center; padding: 0 20px; background: #fff; border-bottom: 1px solid #eee; gap: 24px; position: sticky; top: 0; z-index: 100; }
 .nav-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #06b6d4); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .name { font-weight: 600; font-size: 16px; }
 .name i { font-style: normal; font-size: 11px; color: #999; margin-left: 4px; }
 .nav-links { flex: 1; display: flex; gap: 4px; }
 .nav-links :deep(.el-button.is-text) { color: #555; }
-.nav-links :deep(.el-button.is-text.active) { color: #4f46e5; background: #eef2ff; }
+.nav-links :deep(.el-button.is-text.active) { color: #2563eb; background: #eef2ff; }
 .nav-right { display: flex; align-items: center; gap: 8px; }
 .user { font-size: 13px; color: #555; }
 .dark .navbar { background: #1f2937; border-color: #374151; }

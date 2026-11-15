@@ -4,12 +4,11 @@
     <div class="content">
     <h2 class="page-title">数据大屏</h2>
       <div class="cards">
-        <el-card class="stat-card" shadow="hover"><div class="num" style="color:#4f46e5">{{ ov.documents ?? '-' }}</div><div class="label">语料文档</div></el-card>
+        <el-card class="stat-card" shadow="hover"><div class="num" style="color:#2563eb">{{ ov.documents ?? '-' }}</div><div class="label">语料文档</div></el-card>
         <el-card class="stat-card" shadow="hover"><div class="num" style="color:#0ea5e9">{{ ov.users ?? '-' }}</div><div class="label">注册用户</div></el-card>
         <el-card class="stat-card" shadow="hover"><div class="num" style="color:#10b981">{{ ov.sessions ?? '-' }}</div><div class="label">会话数</div></el-card>
         <el-card class="stat-card" shadow="hover"><div class="num" style="color:#f59e0b">{{ ov.messages ?? '-' }}</div><div class="label">消息数</div></el-card>
-        <el-card class="stat-card" shadow="hover"><div class="num" style="color:#ef4444">{{ ov.feedback ?? '-' }}</div><div class="label">反馈数</div></el-card>
-      </div>
+              </div>
 
       <div class="charts">
         <el-card shadow="hover"><div ref="lineRef" style="height:320px"></div></el-card>
@@ -28,7 +27,6 @@
         <el-button type="primary" @click="$router.push('/admin/knowledge')">语料管理</el-button>
         <el-button @click="$router.push('/admin/config')">参数配置</el-button>
         <el-button @click="$router.push('/admin/users')">用户管理</el-button>
-        <el-button @click="$router.push('/admin/feedback')">反馈管理</el-button>
         <el-button @click="$router.push('/admin/faq')">FAQ 管理</el-button>
         <el-button @click="$router.push('/admin/notice')">公告发布</el-button>
       </div>
@@ -62,7 +60,7 @@ onMounted(async () => {
         grid: { left: 40, right: 20, top: 50, bottom: 30 },
         xAxis: { type: 'category', data: rows.map((r: any) => r.day) },
         yAxis: { type: 'value', minInterval: 1 },
-        series: [{ type: 'line', data: rows.map((r: any) => r.count), smooth: true, areaStyle: { opacity: 0.2 }, itemStyle: { color: '#4f46e5' } }],
+        series: [{ type: 'line', data: rows.map((r: any) => r.count), smooth: true, areaStyle: { opacity: 0.2 }, itemStyle: { color: '#2563eb' } }],
       })
     }
   } catch {}

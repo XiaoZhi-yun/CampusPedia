@@ -50,9 +50,7 @@
               <div v-if="m.role === 'assistant' && m.content && !loading" class="op-bar">
                 <el-button size="small" text @click="copy(m)">复制</el-button>
                 <el-button size="small" text @click="regenerate(m)">重新生成</el-button>
-                <span class="sep"></span>
-                <el-button size="small" text :type="m.fb === 'up' ? 'primary' : ''" @click="feedback(m, 1)">👍 有用</el-button>
-                <el-button size="small" text :type="m.fb === 'down' ? 'danger' : ''" @click="feedback(m, 0)">👎 无用</el-button>
+                <el-button size="small" text @click="speak(m)">{{ speaking === m ? '停止朗读' : '朗读' }}</el-button>
               </div>
 
               <el-collapse v-if="m.sources && m.sources.length" class="sources">
@@ -106,7 +104,7 @@ const loading = ref(false)
 const listRef = ref<HTMLElement | null>(null)
 let abortCtrl: AbortController | null = null
 const dark = ref(false)
-const AVATAR_COLORS: Record<string, string> = { p1: '#4f46e5', p2: '#0ea5e9', p3: '#10b981', p4: '#f59e0b', p5: '#ef4444', p6: '#8b5cf6', p7: '#ec4899', p8: '#14b8a6' }
+const AVATAR_COLORS: Record<string, string> = { p1: '#2563eb', p2: '#0ea5e9', p3: '#10b981', p4: '#f59e0b', p5: '#ef4444', p6: '#8b5cf6', p7: '#ec4899', p8: '#14b8a6' }
 function toggleDark() { dark.value = !dark.value; document.documentElement.classList.toggle('dark', dark.value) }
 
 const filteredSessions = computed(() => {
@@ -235,6 +233,18 @@ async function send(q?: string) {
 
 function stop() { abortCtrl?.abort() }
 
+const speaking = ref<any>(null)
+function speak(m: any) {
+  if (!('speechSynthesis' in window)) { ElMessage.warning('浏览器不支持朗读'); return }
+  if (speaking.value === m) { speechSynthesis.cancel(); speaking.value = null; return }
+  speechSynthesis.cancel()
+  const utter = new SpeechSynthesisUtterance(m.content)
+  utter.lang = 'zh-CN'; utter.rate = 1
+  utter.onend = () => { speaking.value = null }
+  speechSynthesis.speak(utter)
+  speaking.value = m
+}
+
 function copy(m: any) { navigator.clipboard?.writeText(m.content); ElMessage.success('已复制') }
 
 function regenerate(m: any) {
@@ -246,15 +256,6 @@ function regenerate(m: any) {
   }
 }
 
-async function feedback(m: any, rating: number) {
-  if (!auth.token) { ElMessage.warning('请先登录后再反馈'); return }
-  let comment = ''
-  if (rating === 0) {
-    try { const { value } = await ElMessageBox.prompt('请说说哪里不好，帮我们改进', '反馈建议', { confirmButtonText: '提交', cancelButtonText: '取消' }); comment = value || '' } catch { return }
-  }
-  m.fb = rating === 1 ? 'up' : 'down'
-  request.post('/feedback', { rating, comment, question: m.question || '' }).then(() => ElMessage.success('感谢反馈')).catch(() => { ElMessage.error('反馈失败'); m.fb = null })
-}
 
 function onCiteClick(e: Event) {
   const t = (e.target as HTMLElement).closest('.cite') as HTMLElement | null
@@ -305,7 +306,7 @@ onMounted(async () => {
 .session-list { flex: 1; overflow-y: auto; padding: 8px; }
 .session-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #444; }
 .session-item:hover { background: #f5f6f8; }
-.session-item.active { background: #eef2ff; color: #4338ca; }
+.session-item.active { background: #eef2ff; color: #1d4ed8; }
 .stitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .sops { display: none; gap: 4px; }
 .session-item:hover .sops { display: flex; }
@@ -314,27 +315,27 @@ onMounted(async () => {
 .empty { color: #bbb; font-size: 12px; text-align: center; padding: 20px 0; }
 .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .guest-banner { background: #fff7e6; color: #ad6800; font-size: 12px; text-align: center; padding: 6px; border-bottom: 1px solid #ffe7ba; }
-.notice-banner { background: #eef2ff; color: #4338ca; font-size: 13px; padding: 6px 20px; display: flex; gap: 20px; overflow-x: auto; white-space: nowrap; }
+.notice-banner { background: #eef2ff; color: #1d4ed8; font-size: 13px; padding: 6px 20px; display: flex; gap: 20px; overflow-x: auto; white-space: nowrap; }
 .msg-list { flex: 1; overflow-y: auto; padding: 20px; }
 .hint { text-align: center; margin-top: 30px; }
 .hint-title { color: #999; font-size: 14px; margin: 8px 0; }
 .hint-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .msg { display: flex; gap: 10px; margin-bottom: 16px; }
 .msg.user { flex-direction: row-reverse; }
-.avatar { width: 34px; height: 34px; border-radius: 50%; background: #eef2ff; color: #4338ca; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; font-weight: 600; }
-.msg.user .avatar { background: #4f46e5; color: #fff; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: #eef2ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; font-weight: 600; }
+.msg.user .avatar { background: #2563eb; color: #fff; }
 .body { max-width: 78%; min-width: 0; }
 .bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f0f0f0; }
-.msg.user .bubble { background: #4f46e5; color: #fff; border: none; }
-.bubble :deep(.cite) { color: #4f46e5; font-weight: 700; cursor: pointer; padding: 0 2px; }
+.msg.user .bubble { background: #2563eb; color: #fff; border: none; }
+.bubble :deep(.cite) { color: #2563eb; font-weight: 700; cursor: pointer; padding: 0 2px; }
 .msg.user .bubble :deep(.cite) { color: #fff; }
 .op-bar { display: flex; align-items: center; gap: 2px; margin-top: 6px; }
 .op-bar .sep { width: 1px; height: 12px; background: #ddd; margin: 0 6px; }
 .sources { margin-top: 8px; background: #f7f8fa; border-radius: 12px; border: 1px solid #f0f0f0; overflow: hidden; }
 .src { background: #fff; border: 1px solid #f0f0f0; border-radius: 10px; padding: 8px 10px; margin: 6px 4px; }
 .src-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
-.src-no { color: #4f46e5; font-weight: 700; }
-.src a { color: #4f46e5; text-decoration: none; font-weight: 500; }
+.src-no { color: #2563eb; font-weight: 700; }
+.src a { color: #2563eb; text-decoration: none; font-weight: 500; }
 .src-name { font-weight: 500; }
 .src .clause { color: #888; font-size: 12px; }
 .src-snippet { margin-top: 6px; font-size: 12px; color: #666; line-height: 1.6; border-left: 2px solid #e5e7eb; padding-left: 8px; }

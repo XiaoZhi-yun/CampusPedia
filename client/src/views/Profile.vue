@@ -59,7 +59,7 @@ const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const form = reactive({ studentNo: auth.studentNo, username: auth.username, major: auth.major, className: auth.className, avatar: auth.avatar })
 
 const AVATAR_COLORS: Record<string, string> = {
-  p1: '#4f46e5', p2: '#0ea5e9', p3: '#10b981', p4: '#f59e0b',
+  p1: '#2563eb', p2: '#0ea5e9', p3: '#10b981', p4: '#f59e0b',
   p5: '#ef4444', p6: '#8b5cf6', p7: '#ec4899', p8: '#14b8a6',
 }
 

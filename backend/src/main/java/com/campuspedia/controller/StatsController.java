@@ -3,7 +3,6 @@ package com.campuspedia.controller;
 import com.campuspedia.common.Result;
 import com.campuspedia.mapper.ChatMessageMapper;
 import com.campuspedia.mapper.ChatSessionMapper;
-import com.campuspedia.mapper.FeedbackMapper;
 import com.campuspedia.mapper.KbDocumentMapper;
 import com.campuspedia.mapper.UserMapper;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +20,13 @@ public class StatsController {
     private final KbDocumentMapper documentMapper;
     private final ChatSessionMapper sessionMapper;
     private final ChatMessageMapper messageMapper;
-    private final FeedbackMapper feedbackMapper;
     private final UserMapper userMapper;
 
     public StatsController(KbDocumentMapper documentMapper, ChatSessionMapper sessionMapper,
-                           ChatMessageMapper messageMapper, FeedbackMapper feedbackMapper, UserMapper userMapper) {
+                           ChatMessageMapper messageMapper, UserMapper userMapper) {
         this.documentMapper = documentMapper;
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
-        this.feedbackMapper = feedbackMapper;
         this.userMapper = userMapper;
     }
 
@@ -39,7 +36,6 @@ public class StatsController {
         m.put("documents", documentMapper.selectCount(null));
         m.put("sessions", sessionMapper.selectCount(null));
         m.put("messages", messageMapper.selectCount(null));
-        m.put("feedback", feedbackMapper.selectCount(null));
         m.put("users", userMapper.selectCount(null));
         return Result.ok(m);
     }

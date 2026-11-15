@@ -79,7 +79,7 @@ async function register() {
 </script>
 
 <style scoped>
-.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); }
 .login-card { width: 400px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
 .login-card :deep(.el-card__body) { padding: 28px 28px 20px; }
 h2 { margin: 0 0 4px; text-align: center; }
