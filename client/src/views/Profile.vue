@@ -137,7 +137,7 @@ onMounted(load)
 .avatar-opt { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
 .avatar-opt.active { border-color: #333; }
 .session-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.batch-bar { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; }
+.batch-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; }
 .session-card :deep(.el-card__body) { flex: 1; overflow-y: auto; }
 .session-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
 .session-item:hover { background: #f5f6f8; }
