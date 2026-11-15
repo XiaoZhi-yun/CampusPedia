@@ -11,6 +11,7 @@
           <el-button v-if="editingId" @click="reset">取消</el-button>
         </div>
         <el-table :data="list" size="small">
+          <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="id" label="ID" width="60" align="center" />
           <el-table-column prop="title" label="标题" min-width="160" show-overflow-tooltip />
           <el-table-column prop="content" label="内容" min-width="240" show-overflow-tooltip />

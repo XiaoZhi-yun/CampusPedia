@@ -126,7 +126,7 @@ public class KnowledgeService {
 
     private String saveFile(String fileName, byte[] bytes) {
         try {
-            Path dir = Paths.get(storagePath);
+            Path dir = Paths.get(storagePath, "original");
             Files.createDirectories(dir);
             String saved = UUID.randomUUID() + "_" + fileName;
             Path p = dir.resolve(saved);

@@ -35,6 +35,8 @@ public class NoticeController {
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         noticeMapper.deleteById(id);
+        Long maxId = noticeMapper.selectMaxId();
+        noticeMapper.resetAutoIncrement((maxId == null ? 0 : maxId) + 1);
         return Result.ok(null);
     }
 }
