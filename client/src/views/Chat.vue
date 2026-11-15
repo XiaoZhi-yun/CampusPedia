@@ -190,9 +190,12 @@ async function send(q?: string) {
 
   if (auth.token && !currentSessionId.value) {
     try {
-      const res = await request.post('/sessions', { title: question.slice(0, 15) }) as any
+      const res = await request.post('/sessions', { title: question.slice(0, 20) }) as any
       if (res.code === 200) { currentSessionId.value = res.data.id; sessions.value.unshift(res.data) }
     } catch {}
+  } else if (auth.token && currentSessionId.value) {
+    const cur = sessions.value.find((s: any) => s.id === currentSessionId.value)
+    if (cur && (!cur.title || cur.title === '新对话')) cur.title = question.slice(0, 20)
   }
 
   abortCtrl = new AbortController()

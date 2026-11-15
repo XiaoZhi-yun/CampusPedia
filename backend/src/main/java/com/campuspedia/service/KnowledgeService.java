@@ -120,14 +120,13 @@ public class KnowledgeService {
 
     public void delete(Long documentId) {
         KbDocument doc = documentMapper.selectById(documentId);
-        chunkMapper.delete(new QueryWrapper<DocChunk>().eq("document_id", documentId));
-        vectorStore.removeByDocument(String.valueOf(documentId));
+        try { chunkMapper.delete(new QueryWrapper<DocChunk>().eq("document_id", documentId)); } catch (Exception ignore) {}
+        try { vectorStore.removeByDocument(String.valueOf(documentId)); } catch (Exception ignore) {}
         documentMapper.deleteById(documentId);
         if (doc != null && doc.getFilePath() != null) {
             try { Files.deleteIfExists(Paths.get(doc.getFilePath())); } catch (Exception ignore) {}
         }
-        Long maxId = documentMapper.selectMaxId();
-        documentMapper.resetAutoIncrement((maxId == null ? 0 : maxId) + 1);
+        try { Long maxId = documentMapper.selectMaxId(); documentMapper.resetAutoIncrement((maxId == null ? 0 : maxId) + 1); } catch (Exception ignore) {}
     }
 
     private String saveFile(String fileName, byte[] bytes) {
