@@ -236,7 +236,7 @@ function stop() { abortCtrl?.abort() }
 const speaking = ref<any>(null)
 function cleanForSpeech(text: string) {
   return text
-    .replace(/\[\d+\]/g, '')
+    .replace(/\[(?:来源)?\d+\]/g, '')
     .replace(/\*\*/g, '')
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/^\s*[-*]\s+/gm, '')
