@@ -39,3 +39,7 @@ backend/application-local.yml
 # 上传文件（运行时数据，不进仓库）
 uploads/
 backend/uploads/
+
+# Trae 工具产生的临时文件
+er.name
+client/docs/
