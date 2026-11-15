@@ -56,12 +56,7 @@ public class HybridRetriever {
         }
         Map<String, Double> rrf = new HashMap<>();
         for (String id : metaById.keySet()) {
-            double score = 0;
-            Integer vr = vectorRank.get(id);
-            Integer kr = keywordRank.get(id);
-            if (vr != null) score += 1.0 / (60 + vr);
-            if (kr != null) score += 1.0 / (60 + kr);
-            rrf.put(id, score);
+            rrf.put(id, rrfScore(vectorRank.get(id), keywordRank.get(id)));
         }
         List<RetrievedChunk> result = new ArrayList<>();
         for (Map.Entry<String, Double> e : rrf.entrySet()) {
@@ -71,6 +66,14 @@ public class HybridRetriever {
         }
         result.sort((a, b) -> Double.compare(b.score(), a.score()));
         return result;
+    }
+
+    /** RRF 融合得分：rank 越小（越靠前）得分越高。 */
+    public static double rrfScore(Integer vectorRank, Integer keywordRank) {
+        double score = 0;
+        if (vectorRank != null) score += 1.0 / (60 + vectorRank);
+        if (keywordRank != null) score += 1.0 / (60 + keywordRank);
+        return score;
     }
 
     private RetrievedChunk toChunk(String vectorId, String content, String metadataJson, double score) {
