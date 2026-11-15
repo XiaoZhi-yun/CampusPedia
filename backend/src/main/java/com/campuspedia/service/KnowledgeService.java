@@ -126,6 +126,8 @@ public class KnowledgeService {
         if (doc != null && doc.getFilePath() != null) {
             try { Files.deleteIfExists(Paths.get(doc.getFilePath())); } catch (Exception ignore) {}
         }
+        Long maxId = documentMapper.selectMaxId();
+        documentMapper.resetAutoIncrement((maxId == null ? 0 : maxId) + 1);
     }
 
     private String saveFile(String fileName, byte[] bytes) {

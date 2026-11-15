@@ -372,8 +372,8 @@ onMounted(async () => {
 .msg.user { flex-direction: row-reverse; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: #ea580c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; font-weight: 600; }
 .msg.user .avatar { background: #ea580c; color: #fff; }
-.body { max-width: 78%; min-width: 0; }
-.bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f1ece5; }
+.body { max-width: 70%; min-width: 0; }
+.bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f1ece5; width: fit-content; max-width: 100%; }
 .msg.user .bubble { background: #ea580c; color: #fff; border: none; }
 .bubble :deep(.cite) { color: #c2410c; font-weight: 700; cursor: pointer; padding: 0 2px; }
 .msg.user .bubble :deep(.cite) { color: #fff; }

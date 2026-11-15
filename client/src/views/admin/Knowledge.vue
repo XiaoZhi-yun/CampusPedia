@@ -6,13 +6,16 @@
       <el-card>
         <h3>上传文档</h3>
         <div class="upload-row">
-          <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" @change="onFile" />
+          <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" style="display:none" @change="onFile" />
+          <el-button @click="fileRef.click()">选择文件</el-button>
+          <span v-if="file" class="file-name" :title="file.name">📄 {{ file.name }}</span>
+          <span v-else class="file-name placeholder">未选择文件</span>
           <el-select v-model="categoryId" placeholder="请选择语料分类" size="default" style="width:180px">
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
             <el-option label="其他" :value="0" />
           </el-select>
-          <el-input v-model="sourceUrl" placeholder="官网原文链接（可选）" style="width:280px" />
-          <el-button type="primary" :disabled="!file || busy" @click="upload">{{ busy ? '上传中…' : '上传' }}</el-button>
+          <el-input v-model="sourceUrl" placeholder="官网原文链接（可选）" style="width:240px" />
+          <el-button type="primary" :disabled="!file || busy" :loading="busy" @click="upload">{{ busy ? '上传中…' : '上传' }}</el-button>
           <el-button @click="clearForm">清除</el-button>
         </div>
         <p class="type-hint">支持文件类型：.md / .txt / .pdf / .doc / .docx</p>
@@ -152,6 +155,8 @@ onMounted(() => { load(); loadCats() })
 .upload-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
 .msg { margin-top: 8px; font-size: 13px; }
 .type-hint { margin-top: 8px; font-size: 12px; color: #999; }
+.file-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333; }
+.file-name.placeholder { color: #bbb; }
 .chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
 .chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
 .chunk-head .clause { color: #c2410c; }
