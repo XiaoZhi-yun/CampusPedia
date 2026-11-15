@@ -349,7 +349,7 @@ onMounted(async () => {
   white-space: nowrap;
   border-bottom: 1px solid #f3e2cf;
 }
-.msg-list { flex: 1; overflow-y: auto; padding: 24px 20px; }
+.msg-list { flex: 1; overflow-y: auto; padding: 24px 20px; scroll-behavior: smooth; }
 .welcome { text-align: center; margin-top: 40px; }
 .welcome-logo {
   width: 72px;
