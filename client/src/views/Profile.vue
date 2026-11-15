@@ -39,10 +39,12 @@
             <el-button size="small" @click="batchMode = true">批量删除</el-button>
           </template>
           <template v-else>
-            <el-checkbox :model-value="sel.length === sessions.length && sessions.length > 0" @change="toggleAll">全选</el-checkbox>
-            <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">确认删除（{{ sel.length }}）</el-button>
             <el-button size="small" @click="cancelBatch">取消</el-button>
           </template>
+        </div>
+        <div v-if="batchMode" class="batch-bar">
+          <el-checkbox :model-value="sel.length === sessions.length && sessions.length > 0" @change="toggleAll">全选</el-checkbox>
+          <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">确认删除（{{ sel.length }}）</el-button>
         </div>
         <el-empty v-if="sessions.length === 0" description="暂无会话" :image-size="60" />
         <div v-for="s in sessions" :key="s.id" class="session-item" @click="$router.push({ path: '/', query: { sessionId: s.id } })">
@@ -135,6 +137,7 @@ onMounted(load)
 .avatar-opt { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
 .avatar-opt.active { border-color: #333; }
 .session-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.batch-bar { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; }
 .session-card :deep(.el-card__body) { flex: 1; overflow-y: auto; }
 .session-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
 .session-item:hover { background: #f5f6f8; }
