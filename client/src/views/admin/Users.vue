@@ -5,10 +5,11 @@
     <h2 class="page-title">用户管理</h2>
       <el-card>
         <el-table :data="users" size="small">
+          <el-table-column type="index" label="序号" width="55" align="center" />
           <el-table-column prop="id" label="ID" width="60" />
           <el-table-column prop="studentNo" label="学号" width="140" />
-          <el-table-column prop="realName" label="姓名" width="100" />
-          <el-table-column prop="major" label="专业" />
+          <el-table-column prop="username" label="姓名" width="100" />
+          <el-table-column prop="major" label="专业" min-width="130" />
           <el-table-column prop="className" label="班级" width="120" />
           <el-table-column label="角色" width="110">
             <template #default="{ row }">
@@ -18,7 +19,7 @@
           <el-table-column label="状态" width="90">
             <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'danger'" style="width:56px;display:inline-flex;align-items:center;justify-content:center">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag></template>
           </el-table-column>
-          <el-table-column label="操作" width="220">
+          <el-table-column label="操作" width="260" align="center">
             <template #default="{ row }">
               <div style="white-space:nowrap">
               <el-button size="small" style="width:72px" @click="edit(row)">编辑</el-button>

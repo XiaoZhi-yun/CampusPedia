@@ -29,6 +29,9 @@ public class NoticeController {
         return Result.ok(null);
     }
 
+    @PutMapping
+    public Result<Void> update(@RequestBody Notice notice) { noticeMapper.updateById(notice); return Result.ok(null); }
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         noticeMapper.deleteById(id);

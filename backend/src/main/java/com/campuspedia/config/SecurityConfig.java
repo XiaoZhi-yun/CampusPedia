@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/notice/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/notice/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notice/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notice/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/stats/topQuestions").authenticated()
                         .requestMatchers("/api/config/**", "/api/kb/**", "/api/stats/**", "/api/admin/**").hasRole("ADMIN")
