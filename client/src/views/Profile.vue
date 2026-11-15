@@ -35,11 +35,17 @@
       <el-card class="session-card">
         <div class="session-head">
           <h3>我的会话记录（{{ sessions.length }}）</h3>
-          <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button>
+          <template v-if="!batchMode">
+            <el-button size="small" @click="batchMode = true">批量删除</el-button>
+          </template>
+          <template v-else>
+            <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">确认删除（{{ sel.length }}）</el-button>
+            <el-button size="small" @click="cancelBatch">取消</el-button>
+          </template>
         </div>
         <el-empty v-if="sessions.length === 0" description="暂无会话" :image-size="60" />
         <div v-for="s in sessions" :key="s.id" class="session-item" @click="$router.push({ path: '/', query: { sessionId: s.id } })">
-          <el-checkbox :model-value="sel.includes(s.id)" @click.stop @change="toggleSel(s.id)" />
+          <el-checkbox v-if="batchMode" :model-value="sel.includes(s.id)" @click.stop @change="toggleSel(s.id)" />
           <span class="stitle">{{ s.title }}</span>
           <span class="scount">{{ s.messageCount || 0 }} 条消息</span>
         </div>
@@ -59,6 +65,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const sessions = ref<any[]>([])
 const sel = ref<number[]>([])
+const batchMode = ref(false)
 const pwdVisible = ref(false)
 const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const form = reactive({ studentNo: auth.studentNo, username: auth.username, major: auth.major, className: auth.className, avatar: auth.avatar })
@@ -79,6 +86,7 @@ async function load() {
   } catch {}
 }
 
+function cancelBatch() { batchMode.value = false; sel.value = [] }
 function toggleSel(id: number) {
   const i = sel.value.indexOf(id)
   if (i >= 0) sel.value.splice(i, 1); else sel.value.push(id)
