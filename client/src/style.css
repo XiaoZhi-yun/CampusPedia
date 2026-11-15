@@ -1,34 +1,90 @@
-:root { --el-color-primary: #2563eb; --el-color-primary-light-3: #60a5fa; --el-color-primary-light-5: #93c5fd; --el-color-primary-light-7: #bfdbfe; --el-color-primary-light-8: #dbeafe; --el-color-primary-light-9: #eff6ff; --el-color-primary-dark-2: #1d4ed8; }
+:root {
+  --el-color-primary: #ea580c;
+  --el-color-primary-light-3: #f97316;
+  --el-color-primary-light-5: #fb923c;
+  --el-color-primary-light-7: #fdba74;
+  --el-color-primary-light-8: #fed7aa;
+  --el-color-primary-light-9: #fff7ed;
+  --el-color-primary-dark-2: #c2410c;
+}
+
 * { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f6f7; }
+html, body, #app { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #faf7f2;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* ===== 统一深色主题 ===== */
-html.dark body { background: #0d1117; color: #c9d1d9; }
-html.dark .chat-page, html.dark .admin-page, html.dark .profile-page { background: #0d1117; }
-html.dark .chat-area, html.dark .msg-list { background: #0d1117; }
-html.dark .navbar { background: #161b22; border-color: #30363d; }
-html.dark .sidebar { background: #161b22; border-color: #30363d; }
-html.dark .input-bar { background: #161b22; border-color: #30363d; }
-html.dark .bubble { background: #161b22; color: #c9d1d9; border-color: #30363d; }
-html.dark .msg.user .bubble { background: #2563eb; color: #fff; }
-html.dark .session-item { color: #c9d1d9; }
-html.dark .session-item:hover { background: #1f2428; }
-html.dark .session-item.active { background: #2d333b; color: #e6edf3; }
-html.dark .src { background: #161b22; border-color: #30363d; color: #c9d1d9; }
-html.dark .src-snippet, html.dark .clause { color: #8b949e; }
-html.dark .trace, html.dark .sources { background: #161b22; border-color: #30363d; }
-html.dark .login-wrap { background: #0d1117; }
-html.dark .login-card h2, html.dark .login-card .sub { color: #c9d1d9; }
-html.dark .notice-banner { background: #161b22; color: #a5b4fc; border-color: #30363d; }
-html.dark .guest-banner { background: #2d2400; color: #d29922; border-color: #5a4a00; }
-html.dark .hint, html.dark .hint-title, html.dark .empty { color: #8b949e; }
-html.dark .page-title { color: #e6edf3; }
-html.dark .el-card { --el-card-bg-color: #161b22; border-color: #30363d; }
-html.dark .el-table { --el-table-bg-color: #161b22; --el-table-header-bg-color: #1f2428; --el-table-border-color: #30363d; --el-table-text-color: #c9d1d9; --el-table-header-text-color: #c9d1d9; --el-table-row-hover-bg-color: #1f2428; }
-html.dark .el-input__wrapper, html.dark .el-textarea__inner { background-color: #0d1117; box-shadow: 0 0 0 1px #30363d inset; }
-html.dark .el-dialog { background: #161b22; }
-html.dark .stat-card .num, html.dark .stat-card .label { color: #c9d1d9; }
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #d9d0c4; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #b8ad9e; }
+::-webkit-scrollbar-track { background: transparent; }
 
+/* 页面标题统一风格 */
+.page-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 18px;
+  padding-left: 12px;
+  position: relative;
+  letter-spacing: .3px;
+}
+.page-title::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 4px; border-radius: 4px;
+  background: #ea580c;
+}
+
+/* 内容区居中 */
+.content { max-width: 1240px; margin: 0 auto; }
+
+/* Element Plus 统一美化 */
+.el-card {
+  border-radius: 12px;
+  border: 1px solid #ece5db;
+  box-shadow: 0 1px 2px rgba(31, 41, 55, .04);
+  transition: box-shadow .2s ease;
+}
+.el-card.is-hover-shadow:hover { box-shadow: 0 6px 18px rgba(31, 41, 55, .08); }
+.el-button { border-radius: 8px; font-weight: 500; }
+.el-input__wrapper, .el-textarea__inner { border-radius: 8px; }
+.el-table { border-radius: 10px; overflow: hidden; }
+.el-tag { border-radius: 6px; }
+.el-dialog { border-radius: 14px; }
 .el-table th .cell, .el-table td .cell { text-align: center; }
 
-.el-card { border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+/* ===== 统一深色主题 ===== */
+html.dark body { background: #141414; color: #c9c9c9; }
+html.dark .chat-page, html.dark .admin-page, html.dark .profile-page { background: #141414; }
+html.dark .chat-area, html.dark .msg-list { background: #141414; }
+html.dark .navbar { background: #1b1b1b; border-color: #2e2e2e; }
+html.dark .sidebar { background: #1b1b1b; border-color: #2e2e2e; }
+html.dark .input-bar { background: #1b1b1b; border-color: #2e2e2e; }
+html.dark .bubble { background: #1b1b1b; color: #c9c9c9; border-color: #2e2e2e; }
+html.dark .msg.user .bubble { background: #c2410c; color: #fff; }
+html.dark .session-item { color: #c9c9c9; }
+html.dark .session-item:hover { background: #202020; }
+html.dark .session-item.active { background: #2a211a; color: #fdba74; }
+html.dark .src { background: #1b1b1b; border-color: #2e2e2e; color: #c9c9c9; }
+html.dark .src-snippet, html.dark .clause { color: #8b8b8b; }
+html.dark .trace, html.dark .sources { background: #1b1b1b; border-color: #2e2e2e; }
+html.dark .login-wrap { background: #141414; }
+html.dark .login-card h2, html.dark .login-card .sub { color: #c9c9c9; }
+html.dark .notice-banner { background: #1b1b1b; color: #fb923c; border-color: #2e2e2e; }
+html.dark .guest-banner { background: #2d2400; color: #d29922; border-color: #5a4a00; }
+html.dark .hint, html.dark .hint-title, html.dark .empty { color: #8b8b8b; }
+html.dark .page-title { color: #e5e5e5; }
+html.dark .el-card { --el-card-bg-color: #1b1b1b; border-color: #2e2e2e; }
+html.dark .el-table { --el-table-bg-color: #1b1b1b; --el-table-header-bg-color: #202020; --el-table-border-color: #2e2e2e; --el-table-text-color: #c9c9c9; --el-table-header-text-color: #c9c9c9; --el-table-row-hover-bg-color: #202020; }
+html.dark .el-input__wrapper, html.dark .el-textarea__inner { background-color: #141414; box-shadow: 0 0 0 1px #2e2e2e inset; }
+html.dark .el-dialog { background: #1b1b1b; }
+html.dark .stat-card .num, html.dark .stat-card .label { color: #c9c9c9; }
+html.dark .welcome-sub { color: #8b8b8b; }
+html.dark .welcome-title { color: #e5e5e5; }

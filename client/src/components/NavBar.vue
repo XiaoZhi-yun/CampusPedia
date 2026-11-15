@@ -6,9 +6,15 @@
     </div>
     <div class="nav-links">
       <template v-if="auth.token">
-        <el-button text :class="{ active: $route.path === '/' }" @click="$router.push('/')">问答</el-button>
-        <el-button text :class="{ active: $route.path === '/profile' }" @click="$router.push('/profile')">个人中心</el-button>
-        <el-button v-if="auth.role === 'admin'" text :class="{ active: $route.path.startsWith('/admin') }" @click="$router.push('/admin')">管理后台</el-button>
+        <el-button text :class="{ active: $route.path === '/' }" @click="$router.push('/')">
+          <el-icon class="nav-ico"><ChatDotRound /></el-icon><span>问答</span>
+        </el-button>
+        <el-button text :class="{ active: $route.path === '/profile' }" @click="$router.push('/profile')">
+          <el-icon class="nav-ico"><User /></el-icon><span>个人中心</span>
+        </el-button>
+        <el-button v-if="auth.role === 'admin'" text :class="{ active: $route.path.startsWith('/admin') }" @click="$router.push('/admin')">
+          <el-icon class="nav-ico"><DataLine /></el-icon><span>管理后台</span>
+        </el-button>
       </template>
     </div>
     <div class="nav-right">
@@ -18,11 +24,14 @@
             <el-icon :size="18"><Sunny v-if="dark" /><Moon v-else /></el-icon>
           </el-button>
         </el-tooltip>
-        <span class="user">{{ auth.username || auth.studentNo }}</span>
+        <div class="user-chip">
+          <span class="user-avatar">{{ (auth.username || auth.studentNo || '学').charAt(0) }}</span>
+          <span class="user">{{ auth.username || auth.studentNo }}</span>
+        </div>
         <el-button text @click="logout">退出</el-button>
       </template>
       <template v-else>
-        <el-button text @click="$router.push('/login')">登录 / 注册</el-button>
+        <el-button type="primary" size="small" @click="$router.push('/login')">登录 / 注册</el-button>
       </template>
     </div>
   </header>
@@ -31,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ChatDotRound, User, DataLine, Sunny, Moon } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -50,19 +60,47 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.navbar { height: 56px; display: flex; align-items: center; padding: 0 20px; background: #fff; border-bottom: 1px solid #eee; gap: 24px; position: sticky; top: 0; z-index: 100; }
-.nav-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #06b6d4); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.name { font-weight: 600; font-size: 16px; }
-.name i { font-style: normal; font-size: 11px; color: #999; margin-left: 4px; }
+.navbar {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #e7ebe8;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #ea580c;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+.name { font-weight: 700; font-size: 17px; color: #1f2937; }
+.name i { font-style: normal; font-size: 11px; color: #9ca3af; margin-left: 5px; font-weight: 500; }
 .nav-links { flex: 1; display: flex; gap: 4px; }
-.nav-links :deep(.el-button.is-text) { color: #555; }
-.nav-links :deep(.el-button.is-text.active) { color: #2563eb; background: #eef2ff; }
-.nav-right { display: flex; align-items: center; gap: 8px; }
-.user { font-size: 13px; color: #555; }
-.dark .navbar { background: #1f2937; border-color: #374151; }
+.nav-ico { margin-right: 5px; }
+.nav-links :deep(.el-button.is-text) { color: #55605c; padding: 0 14px; height: 36px; border-radius: 8px; }
+.nav-links :deep(.el-button.is-text:hover) { color: #c2410c; background: #fff7ed; }
+.nav-links :deep(.el-button.is-text.active) { color: #c2410c; background: #fff7ed; font-weight: 600; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.user-chip { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; background: #f3f4f6; border-radius: 20px; }
+.user-avatar { width: 26px; height: 26px; border-radius: 50%; background: #ea580c; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.user { font-size: 13px; color: #374151; }
+.dark .navbar { background: #1b1b1b; border-color: #2e2e2e; }
 .dark .name { color: #e5e7eb; }
 .dark .user { color: #d1d5db; }
+.dark .user-chip { background: #202020; }
 .dark .nav-links :deep(.el-button.is-text) { color: #d1d5db; }
-.dark .nav-links :deep(.el-button.is-text.active) { color: #a5b4fc; background: #374151; }
+.dark .nav-links :deep(.el-button.is-text:hover) { color: #fb923c; background: #202020; }
+.dark .nav-links :deep(.el-button.is-text.active) { color: #fb923c; background: #2a211a; }
 </style>

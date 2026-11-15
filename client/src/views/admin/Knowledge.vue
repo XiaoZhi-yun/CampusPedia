@@ -153,6 +153,6 @@ onMounted(() => { load(); loadCats() })
 .type-hint { margin-top: 8px; font-size: 12px; color: #999; }
 .chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
 .chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
-.chunk-head .clause { color: #2563eb; }
+.chunk-head .clause { color: #c2410c; }
 .chunk-body { font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
 </style>
