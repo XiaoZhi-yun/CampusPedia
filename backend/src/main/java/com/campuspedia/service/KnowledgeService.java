@@ -119,9 +119,13 @@ public class KnowledgeService {
     public List<KbDocument> list() { return documentMapper.selectList(null); }
 
     public void delete(Long documentId) {
+        KbDocument doc = documentMapper.selectById(documentId);
         chunkMapper.delete(new QueryWrapper<DocChunk>().eq("document_id", documentId));
         vectorStore.removeByDocument(String.valueOf(documentId));
         documentMapper.deleteById(documentId);
+        if (doc != null && doc.getFilePath() != null) {
+            try { Files.deleteIfExists(Paths.get(doc.getFilePath())); } catch (Exception ignore) {}
+        }
     }
 
     private String saveFile(String fileName, byte[] bytes) {
