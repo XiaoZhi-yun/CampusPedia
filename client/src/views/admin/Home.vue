@@ -27,7 +27,6 @@
         <el-button type="primary" @click="$router.push('/admin/knowledge')">语料管理</el-button>
         <el-button @click="$router.push('/admin/config')">参数配置</el-button>
         <el-button @click="$router.push('/admin/users')">用户管理</el-button>
-        <el-button @click="$router.push('/admin/faq')">FAQ 管理</el-button>
         <el-button @click="$router.push('/admin/notice')">公告发布</el-button>
       </div>
     </div>

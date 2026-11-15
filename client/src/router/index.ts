@@ -10,7 +10,6 @@ const router = createRouter({
     { path: '/admin/knowledge', name: 'knowledge', component: () => import('../views/admin/Knowledge.vue') },
     { path: '/admin/config', name: 'config', component: () => import('../views/admin/Config.vue') },
     { path: '/admin/users', name: 'users', component: () => import('../views/admin/Users.vue') },
-    { path: '/admin/faq', name: 'faq', component: () => import('../views/admin/Faq.vue') },
     { path: '/admin/notice', name: 'notice', component: () => import('../views/admin/Notice.vue') },
   ],
 })
