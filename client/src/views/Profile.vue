@@ -39,6 +39,7 @@
             <el-button size="small" @click="batchMode = true">批量删除</el-button>
           </template>
           <template v-else>
+            <el-checkbox :model-value="sel.length === sessions.length && sessions.length > 0" @change="toggleAll">全选</el-checkbox>
             <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">确认删除（{{ sel.length }}）</el-button>
             <el-button size="small" @click="cancelBatch">取消</el-button>
           </template>
@@ -56,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import request from '../api/request'
@@ -87,15 +88,15 @@ async function load() {
 }
 
 function cancelBatch() { batchMode.value = false; sel.value = [] }
+function toggleAll(val: boolean) { sel.value = val ? sessions.value.map((s: any) => s.id) : [] }
 function toggleSel(id: number) {
   const i = sel.value.indexOf(id)
   if (i >= 0) sel.value.splice(i, 1); else sel.value.push(id)
 }
 async function batchDelete() {
+  try { await ElMessageBox.confirm('确定删除选中的 ' + sel.value.length + ' 个会话吗？', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   for (const id of sel.value) await request.delete('/sessions/' + id)
-  sel.value = []
-  load()
-  ElMessage.success('已删除')
+  sel.value = []; batchMode.value = false; load(); ElMessage.success('已删除')
 }
 async function changePwd() {
   if (!pwdForm.oldPassword || !pwdForm.newPassword) { ElMessage.warning('请填写完整'); return }

@@ -227,6 +227,7 @@ async function send(q?: string) {
     if (e.name !== 'AbortError') { m.content = '出错了：' + (e.message || ''); m.html = renderAnswer(m.content) }
     else if (!m.content) { m.content = '（已停止生成）'; m.html = renderAnswer(m.content) }
   } finally {
+    filterCitedSources(messages.value[aiIdx])
     loading.value = false; abortCtrl = null; scrollBottom()
   }
 }
@@ -272,6 +273,15 @@ function onCiteClick(e: Event) {
     const el = document.querySelector('.src') as HTMLElement | null
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
+}
+
+function filterCitedSources(m: any) {
+  if (!m.content || !m.sources || !m.sources.length) return
+  const cited = new Set<number>()
+  const re = /\[(?:来源)?(\d+)\]/g
+  let mm
+  while ((mm = re.exec(m.content)) !== null) cited.add(Number(mm[1]))
+  if (cited.size > 0) m.sources = m.sources.filter((s: any) => cited.has(s.index))
 }
 
 function parseEvent(raw: string): any {
