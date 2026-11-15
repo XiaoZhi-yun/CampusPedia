@@ -11,12 +11,12 @@
               </div>
 
       <div class="charts">
-        <el-card shadow="hover" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)"><div ref="lineRef" style="height:320px"></div></el-card>
-        <el-card shadow="hover" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)"><div ref="pieRef" style="height:320px"></div></el-card>
+        <el-card shadow="hover"><div ref="lineRef" style="height:320px"></div></el-card>
+        <el-card shadow="hover"><div ref="pieRef" style="height:320px"></div></el-card>
       </div>
 
-      <el-card shadow="hover" style="margin-top:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
-        <h3 style="margin-top:0;color:#e2e8f0">热门问题 TOP10</h3>
+      <el-card shadow="hover" style="margin-top:16px">
+        <h3 style="margin-top:0">热门问题 TOP10</h3>
         <el-table :data="hot" size="small">
           <el-table-column type="index" label="#" width="50" />
           <el-table-column prop="question" label="问题" />
@@ -53,7 +53,7 @@ onMounted(async () => {
     const d = await request.get('/stats/daily') as any
     const rows = d.data || []
     if (lineRef.value) {
-      const chart = echarts.init(lineRef.value, 'dark')
+      const chart = echarts.init(lineRef.value)
       chart.setOption({
         title: { text: '近 7 天问答量', left: 'center', textStyle: { fontSize: 15 } },
         tooltip: { trigger: 'axis' },
@@ -72,7 +72,7 @@ onMounted(async () => {
     const t = await request.get('/stats/docTypes') as any
     const rows = t.data || []
     if (pieRef.value) {
-      const chart = echarts.init(pieRef.value, 'dark')
+      const chart = echarts.init(pieRef.value)
       chart.setOption({
         title: { text: '语料类型分布', left: 'center', textStyle: { fontSize: 15 } },
         tooltip: { trigger: 'item', formatter: '{b}: {c} 篇 ({d}%)' },
@@ -85,13 +85,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.admin-page { min-height: 100vh; background: radial-gradient(ellipse 80% 55% at 50% -10%, rgba(37,99,235,.35), transparent), radial-gradient(ellipse 55% 45% at 100% 100%, rgba(6,182,212,.25), transparent), #0b1220; }
+.admin-page { min-height: 100vh; background: #f5f6f7; }
 .topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
-.brand { font-weight: 600; } .page-title { color: #e2e8f0; }
+.brand { font-weight: 600; }
 .content { padding: 20px; }
 .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-.stat-card { text-align: center; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; }
-.num { font-size: 30px; font-weight: 700; color: #60a5fa; }
-.label { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+.stat-card { text-align: center; }
+.num { font-size: 28px; font-weight: 700; }
+.label { font-size: 13px; color: #999; margin-top: 4px; }
 .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
 </style>

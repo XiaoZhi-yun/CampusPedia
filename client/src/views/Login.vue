@@ -79,8 +79,8 @@ async function register() {
 </script>
 
 <style scoped>
-.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); }
-.login-card { width: 400px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.login-wrap { height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 15% 20%, rgba(96,165,250,.45), transparent 42%), radial-gradient(circle at 85% 75%, rgba(6,182,212,.4), transparent 45%), radial-gradient(circle at 50% 50%, rgba(255,255,255,.06), transparent 60%), linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #06b6d4 100%); }
+.login-card { width: 400px; border-radius: 18px; box-shadow: 0 24px 70px rgba(0,0,0,.28); backdrop-filter: blur(6px); }
 .login-card :deep(.el-card__body) { padding: 28px 28px 20px; }
 h2 { margin: 0 0 4px; text-align: center; }
 .sub { color: #999; margin: 0 0 16px; font-size: 13px; text-align: center; }
