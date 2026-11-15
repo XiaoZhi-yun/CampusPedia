@@ -20,7 +20,7 @@ public class NoticeController {
 
     @GetMapping
     public Result<List<Notice>> list() {
-        return Result.ok(noticeMapper.selectList(new QueryWrapper<Notice>().orderByDesc("top").orderByDesc("id")));
+        return Result.ok(noticeMapper.selectList(new QueryWrapper<Notice>().orderByDesc("top").orderByDesc("create_time")));
     }
 
     @PostMapping

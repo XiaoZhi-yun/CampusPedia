@@ -128,7 +128,14 @@ async function loadNotices() {
 }
 
 async function newSession() {
-  if (currentSessionId.value && messages.value.length === 0) { ElMessage.info('请在当前对话框进行对话'); return }
+  if (auth.token) {
+    try {
+      const res = await request.get('/sessions') as any
+      if (res.code === 200) sessions.value = res.data || []
+    } catch {}
+  }
+  const latest = sessions.value[0]
+  if (latest && (latest.messageCount == null || latest.messageCount === 0)) { ElMessage.info('请在当前对话框进行对话'); return }
   try {
     const res = await request.post('/sessions', { title: '新对话' }) as any
     if (res.code === 200) { sessions.value.unshift(res.data); currentSessionId.value = res.data.id; messages.value = [] }
