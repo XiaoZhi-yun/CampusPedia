@@ -59,7 +59,7 @@ public class RagChain {
             boolean hybridEnabled = configService.getBool("hybrid_enabled", true);
             boolean rewriteEnabled = configService.getBool("query_rewrite_enabled", true);
             String systemPrompt = configService.get("system_prompt",
-                    "你是学事通CampusPedia，只依据参考资料回答，资料不足明说，结论后标[1][2]");
+                    "你是学事通CampusPedia，只依据参考资料回答，资料不足就明说。引用资料时，只在首次引用该来源处标注一次 [来源N]，不要每句话都重复标注。");
 
             String rewriteQuery = rewriteEnabled ? queryRewriter.rewrite(question, history) : question;
 
@@ -154,7 +154,7 @@ public class RagChain {
             sb.append("[").append(i + 1).append("] 《").append(c.fileName()).append("》")
               .append(c.clauseRef()).append("：").append(c.content()).append("\n\n");
         }
-        sb.append("【学生问题】\n").append(question).append("\n\n请依据上述资料回答，结论后标注 [来源N]。");
+        sb.append("【学生问题】\n").append(question).append("\n\n请依据上述资料回答。引用资料时，只在首次引用该来源处标注一次 [来源N]，不要每句话重复标注。");
         return sb.toString();
     }
 

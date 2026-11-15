@@ -234,11 +234,19 @@ async function send(q?: string) {
 function stop() { abortCtrl?.abort() }
 
 const speaking = ref<any>(null)
+function cleanForSpeech(text: string) {
+  return text
+    .replace(/\[\d+\]/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/\n{2,}/g, '。')
+}
 function speak(m: any) {
   if (!('speechSynthesis' in window)) { ElMessage.warning('浏览器不支持朗读'); return }
   if (speaking.value === m) { speechSynthesis.cancel(); speaking.value = null; return }
   speechSynthesis.cancel()
-  const utter = new SpeechSynthesisUtterance(m.content)
+  const utter = new SpeechSynthesisUtterance(cleanForSpeech(m.content))
   utter.lang = 'zh-CN'; utter.rate = 1
   utter.onend = () => { speaking.value = null }
   speechSynthesis.speak(utter)
