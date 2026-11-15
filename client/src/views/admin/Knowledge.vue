@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import request from '../../api/request'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const docs = ref<any[]>([])
 const categories = ref<any[]>([])
@@ -102,6 +102,7 @@ async function preview(row: any) {
   chunksVisible.value = true
 }
 async function batchDelete() {
+  try { await ElMessageBox.confirm('确定删除选中的 ' + sel.value.length + ' 篇文档吗？删除后相关切片和向量将一并移除。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   for (const row of sel.value) await request.delete('/kb/documents/' + row.id)
   load()
 }
@@ -135,7 +136,7 @@ async function vectorize(id: number) {
 }
 
 async function remove(row: any) {
-  if (!confirm('确定删除《' + row.fileName + '》？')) return
+  try { await ElMessageBox.confirm('确定删除《' + row.fileName + '》吗？删除后相关切片和向量将一并移除。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   await request.delete('/kb/documents/' + row.id)
   load()
 }
