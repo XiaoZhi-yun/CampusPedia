@@ -126,15 +126,16 @@ onMounted(load)
 .profile-page { min-height: 100vh; background: #f5f6f7; }
 .topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
 .brand { font-weight: 600; }
-.content { padding: 20px; display: grid; grid-template-columns: 400px 1fr; gap: 16px; align-items: start; }
-.info-card { }
-.session-card { }
+.content { padding: 20px; display: grid; grid-template-columns: 400px 1fr; gap: 16px; min-height: calc(100vh - 56px); align-items: stretch; }
+.info-card { display: flex; flex-direction: column; }
+.session-card { display: flex; flex-direction: column; }
 .avatar-row { text-align: center; }
 .avatar { width: 64px; height: 64px; border-radius: 50%; color: #fff; font-size: 26px; display: inline-flex; align-items: center; justify-content: center; }
 .avatar-options { display: flex; gap: 10px; flex-wrap: wrap; }
 .avatar-opt { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
 .avatar-opt.active { border-color: #333; }
 .session-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.session-card :deep(.el-card__body) { flex: 1; overflow-y: auto; }
 .session-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
 .session-item:hover { background: #f5f6f8; }
 .scount { color: #999; font-size: 12px; }
