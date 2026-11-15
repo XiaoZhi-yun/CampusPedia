@@ -166,13 +166,16 @@ public class RagChain {
 
     private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
         if (userId == null) return; // 游客：临时会话，不落库
-        // 会话标题：首条消息用问题内容替换默认"新对话"
+        // 更新会话标题 + 消息数
         if (sessionId != null) {
             try {
                 ChatSession session = sessionMapper.selectById(sessionId);
-                if (session != null && (session.getTitle() == null || session.getTitle().isBlank() || "新对话".equals(session.getTitle()))) {
-                    String t = question == null ? "" : question.trim();
-                    session.setTitle(t.length() > 20 ? t.substring(0, 20) : t);
+                if (session != null) {
+                    if (session.getTitle() == null || session.getTitle().isBlank() || "新对话".equals(session.getTitle())) {
+                        String t = question == null ? "" : question.trim();
+                        session.setTitle(t.length() > 20 ? t.substring(0, 20) : t);
+                    }
+                    session.setMessageCount((session.getMessageCount() == null ? 0 : session.getMessageCount()) + 2);
                     sessionMapper.updateById(session);
                 }
             } catch (Exception ignore) {}

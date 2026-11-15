@@ -33,9 +33,13 @@
     </el-dialog>
 
       <el-card class="session-card">
-        <h3>我的会话记录（{{ sessions.length }}）</h3>
+        <div class="session-head">
+          <h3>我的会话记录（{{ sessions.length }}）</h3>
+          <el-button size="small" type="danger" :disabled="!sel.length" @click="batchDelete">批量删除（{{ sel.length }}）</el-button>
+        </div>
         <el-empty v-if="sessions.length === 0" description="暂无会话" :image-size="60" />
         <div v-for="s in sessions" :key="s.id" class="session-item" @click="$router.push({ path: '/', query: { sessionId: s.id } })">
+          <el-checkbox :model-value="sel.includes(s.id)" @click.stop @change="toggleSel(s.id)" />
           <span class="stitle">{{ s.title }}</span>
           <span class="scount">{{ s.messageCount || 0 }} 条消息</span>
         </div>
@@ -54,6 +58,7 @@ import request from '../api/request'
 const auth = useAuthStore()
 const router = useRouter()
 const sessions = ref<any[]>([])
+const sel = ref<number[]>([])
 const pwdVisible = ref(false)
 const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const form = reactive({ studentNo: auth.studentNo, username: auth.username, major: auth.major, className: auth.className, avatar: auth.avatar })
@@ -74,6 +79,16 @@ async function load() {
   } catch {}
 }
 
+function toggleSel(id: number) {
+  const i = sel.value.indexOf(id)
+  if (i >= 0) sel.value.splice(i, 1); else sel.value.push(id)
+}
+async function batchDelete() {
+  for (const id of sel.value) await request.delete('/sessions/' + id)
+  sel.value = []
+  load()
+  ElMessage.success('已删除')
+}
 async function changePwd() {
   if (!pwdForm.oldPassword || !pwdForm.newPassword) { ElMessage.warning('请填写完整'); return }
   try {
@@ -110,7 +125,8 @@ onMounted(load)
 .avatar-options { display: flex; gap: 10px; flex-wrap: wrap; }
 .avatar-opt { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
 .avatar-opt.active { border-color: #333; }
-.session-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
+.session-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.session-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
 .session-item:hover { background: #f5f6f8; }
 .scount { color: #999; font-size: 12px; }
 </style>
