@@ -233,7 +233,7 @@ async function send(q?: string) {
     else if (!m.content) { m.content = '（已停止生成）'; m.html = renderAnswer(m.content) }
   } finally {
     filterCitedSources(messages.value[aiIdx])
-    loading.value = false; abortCtrl = null; scrollBottom()
+    loading.value = false; abortCtrl = null; scrollBottom(true)
   }
 }
 
@@ -310,7 +310,7 @@ function groupedSources(sources: any[]) {
 }
 function fmtIndices(indices: number[]) { return indices.map(i => '[' + i + ']').join(' ') }
 
-function scrollBottom() { nextTick(() => { if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight }) }
+function scrollBottom(smooth = false) { nextTick(() => { const el = listRef.value; if (!el) return; if (smooth) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); else el.scrollTop = el.scrollHeight }) }
 
 onMounted(async () => {
   loadNotices(); loadHot()
@@ -349,7 +349,7 @@ onMounted(async () => {
   white-space: nowrap;
   border-bottom: 1px solid #f3e2cf;
 }
-.msg-list { flex: 1; overflow-y: auto; padding: 24px 20px; scroll-behavior: smooth; }
+.msg-list { flex: 1; overflow-y: auto; padding: 24px 20px; }
 .welcome { text-align: center; margin-top: 40px; }
 .welcome-logo {
   width: 72px;
@@ -375,7 +375,7 @@ onMounted(async () => {
 .msg.user { flex-direction: row-reverse; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: #ea580c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; font-weight: 600; }
 .msg.user .avatar { background: #ea580c; color: #fff; }
-.body { max-width: 70%; min-width: 0; }
+.body { max-width: 58%; min-width: 0; }
 .bubble { padding: 11px 15px; border-radius: 12px; background: #fff; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #f1ece5; width: fit-content; max-width: 100%; }
 .msg.user .bubble { background: #ea580c; color: #fff; border: none; }
 .bubble :deep(.cite) { color: #c2410c; font-weight: 700; cursor: pointer; padding: 0 2px; }
