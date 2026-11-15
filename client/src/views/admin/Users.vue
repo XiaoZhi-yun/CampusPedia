@@ -19,9 +19,9 @@
           <el-table-column label="状态" width="90">
             <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'danger'" style="width:56px;display:inline-flex;align-items:center;justify-content:center">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag></template>
           </el-table-column>
-          <el-table-column label="操作" width="260" align="center">
+          <el-table-column label="操作" width="290" align="center">
             <template #default="{ row }">
-              <div style="white-space:nowrap">
+              <div style="display:flex;gap:6px;justify-content:center;white-space:nowrap">
               <el-button size="small" style="width:72px" @click="edit(row)">编辑</el-button>
               <el-button size="small" style="width:96px" @click="toggleRole(row)">{{ row.role === 'admin' ? '设为普通用户' : '提权管理员' }}</el-button>
               <el-button size="small" type="danger" style="width:64px" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
