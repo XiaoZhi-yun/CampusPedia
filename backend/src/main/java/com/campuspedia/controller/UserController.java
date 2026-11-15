@@ -30,6 +30,9 @@ public class UserController {
         if (u == null) throw new BizException("用户不存在");
         if (body.getRole() != null) u.setRole(body.getRole());
         if (body.getStatus() != null) u.setStatus(body.getStatus());
+        if (body.getUsername() != null) u.setUsername(body.getUsername());
+        if (body.getMajor() != null) u.setMajor(body.getMajor());
+        if (body.getClassName() != null) u.setClassName(body.getClassName());
         userMapper.updateById(u);
         return Result.ok(null);
     }

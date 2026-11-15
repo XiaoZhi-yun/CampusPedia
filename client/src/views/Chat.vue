@@ -28,10 +28,6 @@
         </div>
         <div class="msg-list" ref="listRef">
           <div v-if="messages.length === 0" class="hint">
-            <p class="hint-title">常见问题</p>
-            <div class="hint-btns">
-              <el-button v-for="f in faqs" :key="f.id" size="small" @click="send(f.question)">{{ f.question }}</el-button>
-            </div>
             <p v-if="hot.length" class="hint-title" style="margin-top:16px">猜你想问</p>
             <div class="hint-btns">
               <el-button v-for="h in hot" :key="h.question" size="small" @click="send(h.question)">{{ h.question }}</el-button>
@@ -94,7 +90,6 @@ const auth = useAuthStore()
 const md = new MarkdownIt()
 const messages = ref<any[]>([])
 const sessions = ref<any[]>([])
-const faqs = ref<any[]>([])
 const hot = ref<any[]>([])
 const notices = ref<any[]>([])
 const currentSessionId = ref<number | null>(null)
@@ -124,9 +119,6 @@ function renderAnswer(content: string) {
 async function loadSessions() {
   if (!auth.token) return
   try { const res = await request.get('/sessions') as any; if (res.code === 200) sessions.value = res.data || [] } catch {}
-}
-async function loadFaqs() {
-  try { const r = await request.get('/faq') as any; if (r.code === 200) faqs.value = r.data || [] } catch {}
 }
 async function loadHot() {
   try { const r = await request.get('/stats/topQuestions') as any; if (r.code === 200) hot.value = (r.data || []).slice(0, 3) } catch {}
@@ -308,7 +300,7 @@ function fmtIndices(indices: number[]) { return indices.map(i => '[' + i + ']').
 function scrollBottom() { nextTick(() => { if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight }) }
 
 onMounted(async () => {
-  loadFaqs(); loadNotices(); loadHot()
+  loadNotices(); loadHot()
   await loadSessions()
   const sid = route.query.sessionId
   if (sid && auth.token) openSession(Number(sid))

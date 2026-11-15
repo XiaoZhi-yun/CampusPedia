@@ -21,6 +21,7 @@
           <el-table-column label="操作" width="220">
             <template #default="{ row }">
               <div style="white-space:nowrap">
+              <el-button size="small" style="width:72px" @click="edit(row)">编辑</el-button>
               <el-button size="small" style="width:96px" @click="toggleRole(row)">{{ row.role === 'admin' ? '设为普通用户' : '提权管理员' }}</el-button>
               <el-button size="small" type="danger" style="width:64px" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
               </div>
@@ -29,14 +30,30 @@
         </el-table>
       </el-card>
     </div>
+
+    <el-dialog v-model="editVisible" title="编辑用户" width="400px">
+      <el-form label-width="70px">
+        <el-form-item label="姓名"><el-input v-model="editForm.username" /></el-form-item>
+        <el-form-item label="专业"><el-input v-model="editForm.major" /></el-form-item>
+        <el-form-item label="班级"><el-input v-model="editForm.className" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import request from '../../api/request'
 const users = ref<any[]>([])
+const editVisible = ref(false)
+const editForm = reactive({ id: 0, username: '', major: '', className: '' })
 async function load() { const r = await request.get('/admin/users') as any; if (r.code === 200) users.value = r.data || [] }
+function edit(row: any) { editForm.id = row.id; editForm.username = row.username; editForm.major = row.major; editForm.className = row.className; editVisible.value = true }
+async function saveEdit() { await request.put('/admin/users/' + editForm.id, { username: editForm.username, major: editForm.major, className: editForm.className }); editVisible.value = false; load() }
 async function toggleRole(row: any) { await request.put('/admin/users/' + row.id, { role: row.role === 'admin' ? 'user' : 'admin' }); load() }
 async function toggleStatus(row: any) { await request.put('/admin/users/' + row.id, { status: row.status === 1 ? 0 : 1 }); load() }
 onMounted(load)

@@ -88,7 +88,7 @@ onMounted(async () => {
 .topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
 .brand { font-weight: 600; }
 .content { padding: 20px; }
-.cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .stat-card { text-align: center; }
 .num { font-size: 28px; font-weight: 700; }
 .label { font-size: 13px; color: #999; margin-top: 4px; }
