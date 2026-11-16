@@ -165,7 +165,7 @@ public class RagChain {
     }
 
     private void saveMessage(Long sessionId, Long userId, String question, String rewriteQuery, String answer, List<Map<String, Object>> sources) {
-        if (userId == null) return; // 游客：临时会话，不落库
+        if (userId == null) return; // 未登录：不落库
         // 更新会话标题 + 消息数
         if (sessionId != null) {
             try {

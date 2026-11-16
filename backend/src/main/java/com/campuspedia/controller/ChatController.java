@@ -37,7 +37,7 @@ public class ChatController {
         Long userId = authHelper.currentUserId(request);
         try {
             SysLog l = new SysLog();
-            l.setUsername(userId == null ? "游客" : String.valueOf(userId));
+            l.setUsername(userId == null ? "未知用户" : String.valueOf(userId));
             l.setRole("user");
             l.setAction("chat");
             l.setDetail(question.length() > 200 ? question.substring(0, 200) : question);

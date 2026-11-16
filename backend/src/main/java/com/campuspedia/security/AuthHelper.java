@@ -26,7 +26,7 @@ public class AuthHelper {
         return jwtUtil.parse(auth.substring(7));
     }
 
-    /** 当前登录用户 id；未登录或 token 无效返回 null（游客）。 */
+    /** 当前登录用户 id；未登录或 token 无效返回 null。 */
     public Long currentUserId(HttpServletRequest request) {
         String auth = request.getHeader("Authorization");
         if (auth == null || !auth.startsWith("Bearer ")) return null;

@@ -30,7 +30,7 @@
           <div v-if="messages.length === 0" class="welcome">
             <div class="welcome-logo">通</div>
             <h2 class="welcome-title">你好，我是学事通</h2>
-            <p class="welcome-sub">选课考试、校园生活、规章制度…… 关于校园的一切，尽管问我</p>
+            <p class="welcome-sub">依据学校真实资料回答，杜绝"一本正经胡说八道"</p>
             <div v-if="hot.length" class="hint-btns">
               <span class="hint-title">猜你想问</span>
               <el-button v-for="h in hot" :key="h.question" class="suggest-btn" @click="send(h.question)">{{ h.question }}</el-button>
