@@ -152,10 +152,10 @@ onMounted(() => { load(); loadCats() })
 .topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
 .brand { font-weight: 600; }
 .content { padding: 20px; }
-.upload-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
+.upload-row { display: flex; gap: 14px; align-items: center; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
 .msg { margin-top: 8px; font-size: 13px; }
 .type-hint { margin-top: 8px; font-size: 12px; color: #999; }
-.file-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333; }
+.file-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333; flex-shrink: 0; }
 .file-name.placeholder { color: #bbb; }
 .chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
 .chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }

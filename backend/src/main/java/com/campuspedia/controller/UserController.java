@@ -29,11 +29,19 @@ public class UserController {
         User u = userMapper.selectById(id);
         if (u == null) throw new BizException("用户不存在");
         if (body.getRole() != null) u.setRole(body.getRole());
-        if (body.getStatus() != null) u.setStatus(body.getStatus());
         if (body.getUsername() != null) u.setUsername(body.getUsername());
         if (body.getMajor() != null) u.setMajor(body.getMajor());
         if (body.getClassName() != null) u.setClassName(body.getClassName());
         userMapper.updateById(u);
+        return Result.ok(null);
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        User u = userMapper.selectById(id);
+        if (u == null) throw new BizException("用户不存在");
+        if ("admin".equals(u.getRole())) throw new BizException("不能删除管理员账号");
+        userMapper.deleteById(id);
         return Result.ok(null);
     }
 }

@@ -16,15 +16,12 @@
               <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" style="width:80px;display:inline-flex;align-items:center;justify-content:center">{{ row.role === 'admin' ? '管理员' : '普通用户' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="90">
-            <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'danger'" style="width:56px;display:inline-flex;align-items:center;justify-content:center">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag></template>
-          </el-table-column>
           <el-table-column label="操作" width="290" align="center">
             <template #default="{ row }">
               <div style="display:flex;gap:6px;justify-content:center;white-space:nowrap">
               <el-button size="small" style="width:72px" @click="edit(row)">编辑</el-button>
               <el-button size="small" style="width:96px" @click="toggleRole(row)">{{ row.role === 'admin' ? '设为普通用户' : '提权管理员' }}</el-button>
-              <el-button size="small" type="danger" style="width:64px" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
+              <el-button size="small" type="danger" style="width:64px" @click="del(row)">删除</el-button>
               </div>
             </template>
           </el-table-column>
@@ -48,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import request from '../../api/request'
 const users = ref<any[]>([])
 const editVisible = ref(false)
@@ -56,7 +54,10 @@ async function load() { const r = await request.get('/admin/users') as any; if (
 function edit(row: any) { editForm.id = row.id; editForm.username = row.username; editForm.major = row.major; editForm.className = row.className; editVisible.value = true }
 async function saveEdit() { await request.put('/admin/users/' + editForm.id, { username: editForm.username, major: editForm.major, className: editForm.className }); editVisible.value = false; load() }
 async function toggleRole(row: any) { await request.put('/admin/users/' + row.id, { role: row.role === 'admin' ? 'user' : 'admin' }); load() }
-async function toggleStatus(row: any) { await request.put('/admin/users/' + row.id, { status: row.status === 1 ? 0 : 1 }); load() }
+async function del(row: any) {
+  try { await ElMessageBox.confirm('确定删除用户「' + (row.username || row.studentNo) + '」吗？该操作不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
+  await request.delete('/admin/users/' + row.id); load()
+}
 onMounted(load)
 </script>
 
