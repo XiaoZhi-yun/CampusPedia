@@ -42,7 +42,7 @@ docker compose up -d   # mysql(3307) + redis(6379) + pgvector(5432)
 
 ### 2. 初始化数据库
 ```bash
-# MySQL 建表（11 张）
+# MySQL 建表（9 张）
 docker exec -i campus-pedia-mysql mysql -uroot -pREDACTED --default-character-set=utf8mb4 campus_pedia < sql/init.sql
 # pgvector 建表
 docker exec -i campus-pedia-pgvector psql -U campus -d campus_pedia < sql/init_pgvector.sql
@@ -83,7 +83,7 @@ CampusPedia/
 │       ├── rag/           # RAG 核心：RagChain/混合检索/重排/改写/向量库/文档加载
 │       ├── controller/    # 10 个 REST 控制器
 │       ├── service/       # 知识库/配置/LLM/Embedding 服务
-│       ├── entity+mapper/ # 11 套 MyBatis-Plus 实体与映射
+│       ├── entity+mapper/ # 9 套 MyBatis-Plus 实体与映射
 │       └── security/      # JWT 过滤器与鉴权
 ├── client/                # Vue 3 前端
 ├── corpus/                # 教务语料（公开制度文档）
