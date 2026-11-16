@@ -160,7 +160,7 @@ onMounted(() => { load(); loadCats() })
 .upload-line { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .msg { margin-top: 8px; font-size: 13px; }
 .type-hint { margin-top: 8px; font-size: 12px; color: #999; }
-.file-name { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333; }
+.file-name { font-size: 13px; color: #333; word-break: break-all; }
 .file-name.placeholder { color: #bbb; }
 .chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
 .chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
