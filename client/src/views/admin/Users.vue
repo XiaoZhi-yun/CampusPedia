@@ -45,8 +45,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { useAuthStore } from '../../stores/auth'
+const router = useRouter()
+const auth = useAuthStore()
 const users = ref<any[]>([])
 const editVisible = ref(false)
 const editForm = reactive({ id: 0, username: '', major: '', className: '' })
@@ -55,8 +59,10 @@ function edit(row: any) { editForm.id = row.id; editForm.username = row.username
 async function saveEdit() { await request.put('/admin/users/' + editForm.id, { username: editForm.username, major: editForm.major, className: editForm.className }); editVisible.value = false; load() }
 async function toggleRole(row: any) { await request.put('/admin/users/' + row.id, { role: row.role === 'admin' ? 'user' : 'admin' }); load() }
 async function del(row: any) {
-  try { await ElMessageBox.confirm('确定删除用户「' + (row.username || row.studentNo) + '」吗？该操作不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
-  await request.delete('/admin/users/' + row.id); load()
+  try { await ElMessageBox.confirm('确定删除用户「' + (row.username || row.studentNo) + '」吗？将同时删除该用户的会话和聊天记录，不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
+  const isSelf = row.studentNo === auth.studentNo
+  await request.delete('/admin/users/' + row.id)
+  if (isSelf) { auth.logout(); router.push('/login') } else { load() }
 }
 onMounted(load)
 </script>
