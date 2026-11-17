@@ -136,7 +136,7 @@ EMBEDDING_PROVIDER=hash
 | `POSTGRES_PASSWORD` | **必填** | pgvector 容器 `campus` 用户密码，后端连向量库用 |
 | `DEEPSEEK_API_KEY` | **必填** | DeepSeek `deepseek-chat` 流式生成答案的密钥。**生成答案必须 DeepSeek Key**，缺失则提问拿不到流式输出 |
 | `DASHSCOPE_API_KEY` | 选填 | DashScope embedding / rerank 密钥。仅当 `EMBEDDING_PROVIDER=dashscope` 或启用 rerank 时需要；不填时 rerank 降级为**纯混合检索** |
-| `JWT_SECRET` | **必填** | JWT 签名密钥，**至少 32 字节**；可以让ai生成32字节签名密钥填进去，留空或不足 32 字节，后端启动即 **fail-fast** |
+| `JWT_SECRET` | **必填** | JWT 签名密钥，**至少 32 字节**；可以让ai生成32字节JWT签名密钥填进去，留空或不足 32 字节，后端启动即 **fail-fast** |
 | `EMBEDDING_PROVIDER` | **可选** | 默认 `hash`（免密钥、离线、1024 维）；设为 `dashscope` 走千问 embedding。不写此键时 `application.yml` 的 `${EMBEDDING_PROVIDER:hash}` 同样默认 `hash` |
 
 - **三条必须记住的规则**
