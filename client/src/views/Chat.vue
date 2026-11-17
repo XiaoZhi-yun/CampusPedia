@@ -128,7 +128,7 @@ function renderAnswer(content: string) {
   const html = md.render(content)
   // 只在标签外的文本片段替换 [N]，避免命中 href 等属性内的数字方括号
   return html.replace(/(^|>)([^<]*)/g, (_all: string, lead: string, text: string) =>
-    lead + text.replace(/\[(\d+)\]/g, '<span class="cite" data-idx="$1">[$1]</span>'))
+    lead + text.replace(/\[(?:来源)?(\d+)\]/g, (all: string, n: string) => `<span class="cite" data-idx="${n}">${all}</span>`))
 }
 
 /**
@@ -183,11 +183,17 @@ async function openSession(id: number) {
   try {
     const res = await request.get('/sessions/' + id + '/messages') as any
     if (res.code === 200) {
-      messages.value = (res.data || []).map((m: any) => ({
-        role: m.role, content: m.content || '',
-        html: m.role === 'assistant' ? renderAnswer(m.content || '') : '',
-        sources: m.sources ? safeJson(m.sources) : [], trace: null, fb: null,
-      }))
+      messages.value = (res.data || []).map((m: any) => {
+        const content = m.role === 'assistant' ? dedupeCitations(m.content || '') : (m.content || '')
+        const item: any = {
+          role: m.role, content,
+          html: m.role === 'assistant' ? renderAnswer(content) : '',
+          sources: m.sources ? safeJson(m.sources) : [], trace: null, fb: null,
+        }
+        // 历史消息与实时消息用同一套过滤，避免「历史 5 条来源、新答 2 条」的不一致
+        if (m.role === 'assistant') filterCitedSources(item)
+        return item
+      })
       scrollBottom()
     }
   } catch {}
@@ -279,7 +285,13 @@ async function send(q?: string) {
     if (e.name !== 'AbortError') { m.content = '出错了：' + (e.message || ''); m.html = renderAnswer(m.content) }
     else if (!m.content) { m.content = '（已停止生成）'; m.html = renderAnswer(m.content) }
   } finally {
-    filterCitedSources(messages.value[aiIdx])
+    const m = messages.value[aiIdx]
+    if (m) {
+      // 收尾去重并重渲染：保证实时答案与落库历史显示一致，且引用编号可点击
+      m.content = dedupeCitations(m.content)
+      m.html = renderAnswer(m.content)
+      filterCitedSources(m)
+    }
     loading.value = false; abortCtrl = null; scrollBottom(true)
   }
 }
@@ -332,6 +344,16 @@ function onCiteClick(e: Event) {
   const all = Array.from(document.querySelectorAll('.src')) as HTMLElement[]
   const el = (idx > 0 ? all[idx - 1] : null) || all[0]
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+/** 同一来源编号全文只保留首次标注；模型偶尔会每句话都重复 [来源N]。 */
+function dedupeCitations(text: string) {
+  const seen = new Set<string>()
+  return text.replace(/\[来源(\d+)\]/g, (all, n: string) => {
+    if (seen.has(n)) return ''
+    seen.add(n)
+    return all
+  })
 }
 
 function filterCitedSources(m: any) {

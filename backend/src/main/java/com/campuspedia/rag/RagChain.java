@@ -24,7 +24,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -136,15 +139,18 @@ public class RagChain {
             }
             if (finalHits.isEmpty()) finalHits = new ArrayList<>(candidates.subList(0, Math.min(1, candidates.size())));
 
-            List<Map<String, Object>> sources = buildSources(finalHits);
-            // 把最终命中编号后拼进用户 Prompt，编号与 sources 事件一一对应
-            String userPrompt = buildUserPrompt(question, finalHits);
+            // 同一篇文档的多个切片合并为一个来源编号，避免一篇文档被拆成 [来源1]~[来源5]
+            List<SourceGroup> groups = groupByDocument(finalHits);
+            List<Map<String, Object>> sources = buildSources(groups);
+            // 编号与 sources 事件一一对应：Prompt 与来源卡片共用同一分组的 index
+            String userPrompt = buildUserPrompt(question, groups);
 
             emit(emitter, "sources", sources, alive);
             emit(emitter, "trace", Map.of(
                     "rewriteQuery", rewriteQuery,
                     "candidateCount", candidates.size(),
                     "finalCount", finalHits.size(),
+                    "sourceCount", groups.size(),
                     "threshold", threshold), alive);
 
             StringBuilder answer = new StringBuilder();
@@ -156,7 +162,8 @@ public class RagChain {
             emit(emitter, "done", null, alive);
             emitter.complete();
             // 仅在 emitter.complete 之后落库；此前任一 emit 抛错都会跳过本行
-            saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
+            // 落库前兜底去重：模型仍可能重复标注 [来源N]，历史消息只保留首次引用
+            saveMessage(sessionId, userId, question, rewriteQuery, dedupeCitations(answer.toString()), sources);
         } catch (Exception e) {
             if (alive.get()) {
                 try {
@@ -185,19 +192,63 @@ public class RagChain {
         return finalHits;
     }
 
-    private List<Map<String, Object>> buildSources(List<RetrievedChunk> hits) {
+    /**
+     * 同一篇文档的多个切片归为一个来源分组。
+     * 来源卡片语义是「引用到具体文件」而非「引用到第几个切片」；不合并会把一篇文档
+     * 拆成 [来源1]~[来源5]，答案里随之出现大量重复编号。
+     */
+    private List<SourceGroup> groupByDocument(List<RetrievedChunk> hits) {
+        Map<Long, SourceGroup> byDoc = new LinkedHashMap<>();
+        for (RetrievedChunk c : hits) {
+            SourceGroup g = byDoc.get(c.documentId());
+            if (g == null) {
+                g = new SourceGroup(c);
+                byDoc.put(c.documentId(), g);
+            } else {
+                if ((g.clauseRef == null || g.clauseRef.isEmpty())
+                        && c.clauseRef() != null && !c.clauseRef().isEmpty()) g.clauseRef = c.clauseRef();
+                g.score = Math.max(g.score, c.score());
+                g.content.append('\n');
+            }
+            g.content.append(c.content());
+        }
+        List<SourceGroup> groups = new ArrayList<>(byDoc.values());
+        for (int i = 0; i < groups.size(); i++) groups.get(i).index = i + 1;
+        return groups;
+    }
+
+    /** 一个来源分组对应一篇文档；index 同时用于 Prompt 标注与来源卡片编号。 */
+    private static class SourceGroup {
+        int index;
+        final long documentId;
+        final String fileName;
+        final String category;
+        String clauseRef;
+        final String sourceUrl;
+        double score;
+        final StringBuilder content = new StringBuilder();
+
+        SourceGroup(RetrievedChunk c) {
+            this.documentId = c.documentId();
+            this.fileName = c.fileName();
+            this.category = c.category();
+            this.clauseRef = c.clauseRef();
+            this.sourceUrl = c.sourceUrl();
+            this.score = c.score();
+        }
+    }
+
+    private List<Map<String, Object>> buildSources(List<SourceGroup> groups) {
         List<Map<String, Object>> sources = new ArrayList<>();
-        for (int i = 0; i < hits.size(); i++) {
-            RetrievedChunk c = hits.get(i);
+        for (SourceGroup g : groups) {
             Map<String, Object> s = new LinkedHashMap<>();
-            s.put("index", i + 1);
-            s.put("fileName", c.fileName());
-            s.put("category", c.category());
-            s.put("clauseRef", c.clauseRef());
-            String snip = c.content();
-            s.put("snippet", snip.length() > 180 ? snip.substring(0, 180) + "..." : snip);
-            s.put("sourceUrl", safeUrl(c.sourceUrl()));
-            s.put("score", Math.round(c.score() * 10000) / 10000.0);
+            s.put("index", g.index);
+            s.put("fileName", g.fileName);
+            s.put("category", g.category);
+            s.put("clauseRef", g.clauseRef);
+            s.put("snippet", truncate(g.content.toString(), 300));
+            s.put("sourceUrl", safeUrl(g.sourceUrl));
+            s.put("score", Math.round(g.score * 10000) / 10000.0);
             sources.add(s);
         }
         return sources;
@@ -208,15 +259,35 @@ public class RagChain {
         return url != null && url.matches("(?i)^https?://.*") ? url : "";
     }
 
-    private String buildUserPrompt(String question, List<RetrievedChunk> hits) {
-        // 资料在前、问题在后，并在指令中限定引用格式，降低模型脱离资料发挥
+    private String buildUserPrompt(String question, List<SourceGroup> groups) {
+        // 资料在前、问题在后；一个编号对应一篇文档，避免模型把同一文件标成多个来源
         StringBuilder sb = new StringBuilder("【参考资料】\n");
-        for (int i = 0; i < hits.size(); i++) {
-            RetrievedChunk c = hits.get(i);
-            sb.append("[").append(i + 1).append("] 《").append(c.fileName()).append("》")
-              .append(c.clauseRef()).append("：").append(c.content()).append("\n\n");
+        for (SourceGroup g : groups) {
+            sb.append("[").append(g.index).append("] 《").append(g.fileName).append("》")
+              .append(g.clauseRef == null ? "" : g.clauseRef).append("：")
+              .append(truncate(g.content.toString(), 3000)).append("\n\n");
         }
-        sb.append("【学生问题】\n").append(question).append("\n\n请依据上述资料回答。引用资料时，只在首次引用该来源处标注一次 [来源N]，不要每句话重复标注。");
+        sb.append("【学生问题】\n").append(question)
+          .append("\n\n请严格依据上述资料回答。引用规则：每个来源编号全文只标注一次，格式为 [来源N]；"
+                  + "多个要点来自同一来源时，只在该来源首次出现处标注，不要重复标注、不要在末尾罗列全部编号；"
+                  + "资料未覆盖的内容请明确说明，不要编造。");
+        return sb.toString();
+    }
+
+    private static String truncate(String s, int max) {
+        return s.length() <= max ? s : s.substring(0, max) + "…";
+    }
+
+    /** 兜底去重：模型仍可能重复标注同一来源，落库前只保留每个编号的首次出现。 */
+    private static String dedupeCitations(String text) {
+        if (text == null) return "";
+        Set<String> seen = new HashSet<>();
+        Matcher m = Pattern.compile("\\[来源(\\d+)\\]").matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(sb, seen.add(m.group(1)) ? Matcher.quoteReplacement(m.group()) : "");
+        }
+        m.appendTail(sb);
         return sb.toString();
     }
 
