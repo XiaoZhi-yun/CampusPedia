@@ -6,23 +6,26 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
-    "vue": "^3.5.13",
-    "vue-router": "^4.4.5",
-    "pinia": "^2.2.6",
-    "axios": "^1.7.7",
-    "element-plus": "^2.8.8",
     "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.7",
+    "echarts": "^5.5.1",
+    "element-plus": "^2.8.8",
     "markdown-it": "^14.1.0",
-    "echarts": "^5.5.1"
+    "pinia": "^2.2.6",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.0",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
-    "vue-tsc": "^2.1.10",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9",
+    "vue-tsc": "^2.1.10"
   },
   "allowScripts": {
     "esbuild@0.21.5": true
