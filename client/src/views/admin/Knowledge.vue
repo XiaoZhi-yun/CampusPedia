@@ -15,7 +15,6 @@
           <div class="upload-line">
             <el-select v-model="categoryId" placeholder="请选择语料分类" size="default" style="width:200px">
               <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-              <el-option label="其他" :value="0" />
             </el-select>
             <el-input v-model="sourceUrl" placeholder="官网原文链接（可选）" style="width:320px" />
             <el-button type="primary" :disabled="!file || busy" :loading="busy" @click="upload">{{ busy ? '上传中…' : '上传' }}</el-button>
@@ -31,7 +30,7 @@
           <span style="font-size:13px;color:#666">按分类筛选：</span>
           <el-select v-model="filterCat" placeholder="全部" size="small" style="width:160px" clearable>
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-            <el-option label="其他" :value="0" />
+            <el-option v-if="hasUncategorized" label="未分类（旧数据）" :value="0" />
           </el-select>
         </div>
         <h3>文档列表（{{ filteredDocs.length }}）
@@ -85,8 +84,15 @@ const categoryId = ref<number>(0)
 const filterCat = ref<number | null>(null)
 const filteredDocs = computed(() => {
   if (filterCat.value === null || filterCat.value === undefined) return docs.value
-  return docs.value.filter((d: any) => d.categoryId === filterCat.value)
+  return docs.value.filter((d: any) => Number(d.categoryId) === Number(filterCat.value))
 })
+/** 「其他」是 t_kb_category 里的真实分类，作为上传默认值；接口未返回时回落 0。 */
+const otherCategoryId = computed(() => {
+  const c = categories.value.find((x: any) => x.name === '其他')
+  return c ? Number(c.id) : 0
+})
+/** 历史 category_id=0 的文档仍可单独筛出，避免旧数据突然消失。 */
+const hasUncategorized = computed(() => docs.value.some((d: any) => Number(d.categoryId) === 0))
 const file = ref<File | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
 const sourceUrl = ref('')
@@ -94,10 +100,22 @@ const busy = ref(false)
 const msg = ref('')
 
 function onFile(e: any) { file.value = e.target.files?.[0] || null }
-function clearForm() { file.value = null; if (fileRef.value) fileRef.value.value = ''; sourceUrl.value = ''; categoryId.value = 0 }
+function clearForm() { file.value = null; if (fileRef.value) fileRef.value.value = ''; sourceUrl.value = ''; categoryId.value = otherCategoryId.value }
 
-async function loadCats() { try { const r = await request.get('/kb/categories') as any; if (r.code === 200) categories.value = r.data || [] } catch {} }
-function catName(id: any) { const c = categories.value.find((x: any) => x.id === id); return c ? c.name : '-' }
+async function loadCats() {
+  try {
+    const r = await request.get('/kb/categories') as any
+    if (r.code === 200) {
+      categories.value = r.data || []
+      if (categoryId.value === 0) categoryId.value = otherCategoryId.value
+    }
+  } catch {}
+}
+function catName(id: any) {
+  if (id === null || id === undefined || Number(id) === 0) return '其他'
+  const c = categories.value.find((x: any) => Number(x.id) === Number(id))
+  return c ? c.name : '其他'
+}
 async function batchVectorize() {
   await request.post('/kb/documents/batch-vectorize', { ids: sel.value.map((r: any) => r.id) })
   ElMessage.success('已重新向量化 ' + sel.value.length + ' 篇')

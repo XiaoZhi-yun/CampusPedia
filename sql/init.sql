@@ -20,6 +20,17 @@ CREATE TABLE IF NOT EXISTS t_kb_category(
   sort_num INT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 语料分类：与 docs/语料清单.md 的 6 大类一致，另加「其他」兜底（排序置末）。
+-- INSERT IGNORE 保证重复执行 init.sql 不会覆盖已有分类，也不会产生重复行。
+INSERT IGNORE INTO t_kb_category(id, name, remark, sort_num) VALUES
+(1,'学籍与教学管理','学籍/选课/考试/转专业等',1),
+(2,'学生管理','处分/宿舍/班级管理等',2),
+(3,'学生奖助','奖助学金/评优等',3),
+(4,'素质拓展','创新创业学分/素质拓展学分等',4),
+(5,'学生就业','就业/实习等',5),
+(6,'医疗保障','医保/体检等',6),
+(7,'其他','未归入上述六类的制度文件',99);
+
 CREATE TABLE IF NOT EXISTS t_kb_document(
   id INT AUTO_INCREMENT PRIMARY KEY,
   category_id INT NOT NULL DEFAULT 0,
