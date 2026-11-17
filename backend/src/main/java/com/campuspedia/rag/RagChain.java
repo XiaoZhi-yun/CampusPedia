@@ -1,4 +1,12 @@
 package com.campuspedia.rag;
+/**
+ * RAG 问答主链路编排，隶属 RAG 检索链路层（rag 包），是流式问答的入口。
+ *
+ * <p>上游：聊天 Controller 通过 {@code SseEmitter} 调用；下游：串联 {@code QueryRewriter} 改写、
+ * {@code HybridRetriever} 混合检索、{@code RerankService} 重排、{@code LlmService} 流式生成，
+ * 并借 {@code ConfigService} 读取开关、{@code ChatMessageMapper}/{@code ChatSessionMapper} 落库。
+ * 负责 SSE 事件推送、客户端断开中断与消息持久化。</p>
+ */
 
 import com.campuspedia.entity.ChatMessage;
 import com.campuspedia.entity.ChatSession;
@@ -22,11 +30,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 编排「改写 → 检索 → 重排 → 生成 → 落库」的流式问答主链路。
+ *
+ * <p>链路各阶段均可配置开关且失败有降级：重排不可用退回混合检索结果，向量/关键词任一路失败
+ * 由 {@code HybridRetriever} 兜底。SSE 推送与落库受每请求独立的 {@code alive} 标志控制，
+ * 客户端断开即中止生成且不写库。</p>
+ */
 @Component
 public class RagChain {
 
     private static final Logger log = LoggerFactory.getLogger(RagChain.class);
 
+    /** 常见问候语集合；命中时跳过检索直接寒暄，省去无意义的召回与 token。 */
     private static final Set<String> GREETINGS = Set.of(
             "你好", "您好", "嗨", "hi", "hello", "哈喽", "在吗", "在不在",
             "早上好", "下午好", "晚上好", "中午好", "谢谢", "感谢", "再见", "拜拜");
@@ -40,6 +56,17 @@ public class RagChain {
     private final ChatSessionMapper sessionMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * 组装问答链路的全部依赖。
+     *
+     * @param queryRewriter   多轮查询改写
+     * @param hybridRetriever 混合检索
+     * @param rerankService   候选重排
+     * @param llmService      流式答案生成
+     * @param configService   召回条数、阈值、开关与系统提示词
+     * @param messageMapper   问答消息落库
+     * @param sessionMapper   会话标题与消息数更新
+     */
     public RagChain(QueryRewriter queryRewriter, HybridRetriever hybridRetriever,
                     RerankService rerankService, LlmService llmService,
                     ConfigService configService, ChatMessageMapper messageMapper, ChatSessionMapper sessionMapper) {
@@ -52,15 +79,30 @@ public class RagChain {
         this.sessionMapper = sessionMapper;
     }
 
+    /**
+     * 执行一次流式问答，按 sources / trace / delta / done（或 error）顺序推送 SSE 事件。
+     *
+     * <p>副作用：生成完成后写入用户与助手两条消息并更新会话；未登录（{@code userId} 为
+     * {@code null}）或客户端断开时不落库。异常且连接仍在时推送 error 后结束 emitter，
+     * 连接已断则静默收尾。</p>
+     *
+     * @param question  当前用户问题
+     * @param history   历史对话，供查询改写使用
+     * @param sessionId 会话 id，为空时消息归到 0
+     * @param userId    用户 id，为空表示未登录、不落库
+     * @param emitter   本次请求的 SSE 发射器，方法内负责 complete
+     */
     public void stream(String question, List<String> history, Long sessionId, Long userId, SseEmitter emitter) {
         // 客户端断开后立刻停止生成与落库，避免继续消耗 LLM token 并写入用户已「停止」的答案
         AtomicBoolean alive = new AtomicBoolean(true);
         try {
+            // 召回/截断/阈值/开关均取自 t_sys_config，缺省值保证无配置也能跑通链路
             int topKRecall = configService.getInt("rag_top_k_recall", 20);
             int topNFinal = configService.getInt("rag_top_n_final", 5);
             boolean rerankEnabled = configService.getBool("rerank_enabled", true);
             boolean hybridEnabled = configService.getBool("hybrid_enabled", true);
             boolean rewriteEnabled = configService.getBool("query_rewrite_enabled", true);
+            // 系统提示词可运营覆盖，缺省约束模型只依据资料作答并单次标注来源
             String systemPrompt = configService.get("system_prompt",
                     "你是学事通CampusPedia，只依据参考资料回答，资料不足就明说。引用资料时，只在首次引用该来源处标注一次 [来源N]，不要每句话都重复标注。");
 
@@ -85,6 +127,7 @@ public class RagChain {
                 try {
                     finalHits = rerank(candidates, question, topNFinal, threshold);
                 } catch (Exception e) {
+                    // 重排服务不可用/无密钥时退回纯混合检索的前 topN，问答不中断
                     log.warn("Rerank 失败，降级为混合检索：{}", e.getMessage());
                     finalHits = new ArrayList<>(candidates.subList(0, Math.min(topNFinal, candidates.size())));
                 }
@@ -94,6 +137,7 @@ public class RagChain {
             if (finalHits.isEmpty()) finalHits = new ArrayList<>(candidates.subList(0, Math.min(1, candidates.size())));
 
             List<Map<String, Object>> sources = buildSources(finalHits);
+            // 把最终命中编号后拼进用户 Prompt，编号与 sources 事件一一对应
             String userPrompt = buildUserPrompt(question, finalHits);
 
             emit(emitter, "sources", sources, alive);
@@ -111,6 +155,7 @@ public class RagChain {
 
             emit(emitter, "done", null, alive);
             emitter.complete();
+            // 仅在 emitter.complete 之后落库；此前任一 emit 抛错都会跳过本行
             saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
             if (alive.get()) {
@@ -164,6 +209,7 @@ public class RagChain {
     }
 
     private String buildUserPrompt(String question, List<RetrievedChunk> hits) {
+        // 资料在前、问题在后，并在指令中限定引用格式，降低模型脱离资料发挥
         StringBuilder sb = new StringBuilder("【参考资料】\n");
         for (int i = 0; i < hits.size(); i++) {
             RetrievedChunk c = hits.get(i);
@@ -225,6 +271,7 @@ public class RagChain {
         m.put("type", type);
         if (data != null) m.put("data", data);
         try {
+            // send 失败即视为客户端断开：置 alive=false 并抛出，中断后续生成与落库
             emitter.send(SseEmitter.event().data(m));
         } catch (IOException e) {
             alive.set(false);

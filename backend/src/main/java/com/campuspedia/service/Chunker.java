@@ -1,4 +1,11 @@
 package com.campuspedia.service;
+/**
+ * 法规条款级切片器，隶属业务服务层（service 包）。
+ *
+ * <p>上游：{@code KnowledgeService.vectorize} 在文档名命中法规特征时改用它替代通用切片器；
+ * 下游：产出的 {@code ChunkText} 被编码为向量并写入 MySQL 切片表与 pgvector。
+ * 该层只负责按条款边界切分，不承担语义解析。</p>
+ */
 
 import org.springframework.stereotype.Component;
 

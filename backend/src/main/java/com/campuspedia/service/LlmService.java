@@ -1,4 +1,10 @@
 package com.campuspedia.service;
+/**
+ * DeepSeek 大模型调用封装，隶属业务服务层（service 包），提供非流式与流式两种 chat/completions 调用。
+ *
+ * <p>上游：{@code QueryRewriter}（多轮改写走非流式）、{@code RagChain}（答案生成走流式）；
+ * 下游：DeepSeek OpenAI 兼容 HTTP 接口。本层只负责协议编解码与异常包装，不参与 Prompt 组装与检索。</p>
+ */
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,12 +37,15 @@ public class LlmService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /** DeepSeek API Key；缺失时 chat/stream 会鉴权失败，本层不做降级。 */
     @Value("${campus.llm.deepseek-api-key}")
     private String apiKey;
 
+    /** OpenAI 兼容服务根地址；chat 与 stream 均在其后拼接 /chat/completions。 */
     @Value("${campus.llm.deepseek-base-url}")
     private String baseUrl;
 
+    /** 模型名；查询改写与答案生成共用同一模型配置。 */
     @Value("${campus.llm.model}")
     private String model;
 
@@ -98,10 +107,12 @@ public class LlmService {
                     new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    // SSE 仅 data: 行承载增量内容，event/id/空行/心跳等一律跳过
                     if (!line.startsWith("data:")) {
                         continue;
                     }
                     String data = line.substring(5).trim();
+                    // [DONE] 是 OpenAI 兼容流的结束哨兵，收到即停止读取
                     if ("[DONE]".equals(data)) {
                         break;
                     }

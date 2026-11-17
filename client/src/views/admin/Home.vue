@@ -5,6 +5,7 @@
       <h2 class="page-title">数据大屏</h2>
       <p class="page-sub">校园问答运营概览</p>
 
+      <!-- 运营概览：文档 / 用户 / 会话 / 消息四项总量指标 -->
       <div class="cards">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-icon" style="background:#fff7ed;color:#ea580c"><el-icon :size="22"><Files /></el-icon></div>
@@ -36,6 +37,7 @@
         </el-card>
       </div>
 
+      <!-- 图表区：近 7 天问答量折线与语料类型分布，由 ECharts 在挂载后渲染 -->
       <div class="charts">
         <el-card shadow="hover" class="chart-card">
           <div class="chart-head">近 7 天问答量</div>
@@ -71,6 +73,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：数据大屏——运营概览统计卡、近 7 天问答量、语料类型分布与热门问题 TOP10。
+ * 所属页面：路由 /admin（管理后台首页）。
+ * 依赖接口：/stats/overview、/stats/daily、/stats/topQuestions、/stats/docTypes。
+ * 依赖库：ECharts，在 onMounted 拉取数据后于两个 ref 容器上 init 并 setOption。
+ * 全局状态：无 Pinia 依赖；各请求独立 try/catch，单项失败不影响其余区块。
+ */
 import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
 import { Files, User, ChatDotRound, Message, Document, Setting, UserFilled, Bell } from '@element-plus/icons-vue'
@@ -81,6 +90,11 @@ const hot = ref<any[]>([])
 const lineRef = ref<HTMLElement | null>(null)
 const pieRef = ref<HTMLElement | null>(null)
 
+/**
+ * 挂载后依次拉取四组统计数据并渲染图表。
+ * overview / daily / topQuestions / docTypes 各自 try/catch，单项失败只影响对应区块。
+ * 图表仅在 lineRef / pieRef 容器就绪时 echarts.init 并 setOption，避免空容器报错。
+ */
 onMounted(async () => {
   try {
     const o = await request.get('/stats/overview') as any

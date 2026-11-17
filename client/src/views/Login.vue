@@ -6,6 +6,7 @@
         <h2>学事通 · CampusPedia</h2>
         <p class="sub">校园学生事务智能问答</p>
       </div>
+      <!-- 登录 / 注册共用一张卡片，由 tab 切换，两者共享同一份 loading 态 -->
       <el-tabs v-model="tab">
         <el-tab-pane label="登录" name="login">
           <el-form :model="loginForm" :rules="loginRules" ref="loginRef" @submit.prevent>
@@ -34,6 +35,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：登录 / 注册页，成功写入登录态后跳转问答首页。
+ * 所属页面：路由 /login。
+ * 依赖接口：/auth/login、/auth/register（均经 request 封装提交）。
+ * 全局状态：useAuthStore.setLogin 落库 token / role / 用户信息，供路由门禁与导航栏读取。
+ * 约定：code!==200 与 401 由 request 拦截器统一拒绝并 ElMessage 提示，本页只处理表单校验与成功跳转。
+ */
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock, UserFilled, Reading, School } from '@element-plus/icons-vue'
@@ -58,6 +66,10 @@ const regRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, max: 20, message: '密码长度需 6-20 位', trigger: 'blur' }],
 }
 
+/**
+ * 登录：先做表单校验，失败直接返回；成功后 setLogin 写入登录态并跳转首页。
+ * 副作用：loading 置位并在 finally 复位；code!==200 / 401 由 request 拦截器统一处理，本函数不重复提示。
+ */
 async function login() {
   try { await loginRef.value.validate() } catch { return }
   loading.value = true
@@ -68,6 +80,10 @@ async function login() {
   finally { loading.value = false }
 }
 
+/**
+ * 注册：先做表单校验，失败直接返回；成功后与登录一致地 setLogin 并跳转首页。
+ * 副作用：loading 置位并在 finally 复位；错误提示由 request 拦截器统一负责。
+ */
 async function register() {
   try { await regRef.value.validate() } catch { return }
   loading.value = true

@@ -1,4 +1,8 @@
 package com.campuspedia.controller;
+/**
+ * 控制层：校园 RAG 问答的 SSE 流式入口 /api/chat/stream。
+ * <p>建立流之前校验会话归属，随后把问题交给 RagChain 异步生成并记录问答日志。</p>
+ */
 
 import com.campuspedia.common.BizException;
 import com.campuspedia.rag.RagChain;
@@ -21,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 问答流式接口：建立 SSE 连接，把问题与历史交给 RagChain 逐段回推。
+ * <p>连接建立前校验前端传入 sessionId 的归属，并记录问答日志。</p>
+ */
 @RestController
 @RequestMapping("/api")
 public class ChatController {
@@ -32,6 +40,14 @@ public class ChatController {
     private final SysLogMapper sysLogMapper;
     private final ChatSessionMapper sessionMapper;
 
+    /**
+     * 注入 RAG 链、鉴权辅助与日志/会话 Mapper。
+     *
+     * @param ragChain      执行检索增强生成与流式输出
+     * @param authHelper    解析当前登录用户 id
+     * @param sysLogMapper  记录问答日志
+     * @param sessionMapper 校验会话归属
+     */
     public ChatController(RagChain ragChain, AuthHelper authHelper, SysLogMapper sysLogMapper, ChatSessionMapper sessionMapper) {
         this.ragChain = ragChain;
         this.authHelper = authHelper;
@@ -39,6 +55,14 @@ public class ChatController {
         this.sessionMapper = sessionMapper;
     }
 
+    /**
+     * 建立 SSE 流：校验会话归属、记录日志后异步触发 RAG 流式生成。
+     * <p>返回后由后台线程持续向 emitter 推送；sessionId 不属于当前用户时抛 403。</p>
+     *
+     * @param body    含 question/sessionId/history 的请求体
+     * @param request 用于解析登录用户与来源 IP
+     * @return 120 秒超时的 SseEmitter，流式结果由后台推送
+     */
     @PostMapping("/chat/stream")
     public SseEmitter stream(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         String question = String.valueOf(body.getOrDefault("question", ""));
@@ -61,6 +85,7 @@ public class ChatController {
             l.setIp(request.getRemoteAddr());
             sysLogMapper.insert(l);
         } catch (Exception e) {
+            /** 日志写入失败不中断问答主流程，降级记录后继续建立流。 */
             log.warn("写入问答日志失败", e);
         }
         SseEmitter emitter = new SseEmitter(120_000L);

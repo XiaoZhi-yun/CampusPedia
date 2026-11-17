@@ -2,6 +2,7 @@
   <div class="profile-page">
     <NavBar />
     <div class="content">
+      <!-- 基本信息卡：编辑资料、选择头像与修改密码入口 -->
       <el-card class="info-card">
         <h3>基本信息</h3>
         <div class="avatar-row">
@@ -32,6 +33,7 @@
       </template>
     </el-dialog>
 
+      <!-- 会话记录卡：点击跳回问答页对应会话，支持批量勾选删除 -->
       <el-card class="session-card">
         <div class="session-head">
           <h3>我的会话记录（{{ sessions.length }}）</h3>
@@ -58,6 +60,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：个人中心——编辑资料与头像、修改密码、查看并批量删除会话记录。
+ * 所属页面：路由 /profile。
+ * 依赖接口：/sessions、/profile（GET 读取 / PUT 保存）、/profile/password（改密）。
+ * 全局状态：useAuthStore；保存成功后同步 Pinia 与 sessionStorage，供路由门禁和头像读取。
+ * 布局：两张卡片撑满视口高度，左资料、右会话记录。
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
@@ -78,6 +87,10 @@ const AVATAR_COLORS: Record<string, string> = {
   p5: '#a16207', p6: '#64748b', p7: '#7c2d12', p8: '#c2410c',
 }
 
+/**
+ * 并行拉取会话列表与个人资料，两段各自 try/catch 容错。
+ * 资料为空时保留 useAuthStore 初始值，避免表单被清空。
+ */
 async function load() {
   try { const r = await request.get('/sessions') as any; if (r.code === 200) sessions.value = r.data || [] } catch {}
   try {
@@ -95,6 +108,10 @@ function toggleSel(id: number) {
   const i = sel.value.indexOf(id)
   if (i >= 0) sel.value.splice(i, 1); else sel.value.push(id)
 }
+/**
+ * 批量删除选中会话：二次确认后逐个 DELETE，清空选择、退出批量模式并 reload。
+ * 错误由 request 拦截器统一提示。
+ */
 async function batchDelete() {
   try { await ElMessageBox.confirm('确定删除选中的 ' + sel.value.length + ' 个会话吗？', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   for (const id of sel.value) await request.delete('/sessions/' + id)
@@ -108,6 +125,11 @@ async function changePwd() {
   } catch { /* 错误已由请求拦截器统一提示 */ }
 }
 
+/**
+ * 保存个人资料与头像。
+ * 成功后同步 useAuthStore 与 sessionStorage（username / major / className / avatar），
+ * 使路由门禁读取的展示信息与头像配色在刷新后仍一致；错误由拦截器提示。
+ */
 async function save() {
   try {
     const r = await request.put('/profile', { username: form.username, major: form.major, className: form.className, avatar: form.avatar }) as any

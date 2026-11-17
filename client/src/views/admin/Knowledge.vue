@@ -5,6 +5,7 @@
     <h2 class="page-title">语料管理</h2>
       <el-card>
         <h3>上传文档</h3>
+        <!-- 上传面板：选择文档、指定语料分类与官网原文链接后提交入库 -->
         <div class="upload-panel">
           <div class="upload-line">
             <input type="file" ref="fileRef" accept=".md,.txt,.pdf,.doc,.docx" style="display:none" @change="onFile" />
@@ -25,6 +26,7 @@
         <p v-if="msg" class="msg">{{ msg }}</p>
       </el-card>
 
+      <!-- 文档列表：按分类筛选、批量向量化 / 删除，单行可预览切片或重向量化 -->
       <el-card style="margin-top:16px">
         <div style="margin:12px 0;display:flex;gap:8px;align-items:center">
           <span style="font-size:13px;color:#666">按分类筛选：</span>
@@ -71,6 +73,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：语料管理——文档上传、分类筛选、向量化、删除与切片预览。
+ * 所属页面：路由 /admin/knowledge（管理后台，仅管理员可达）。
+ * 依赖接口：/kb/categories（分类唯一来源）、/kb/documents 及 batch-vectorize、:id/chunks、:id/vectorize 子路径。
+ * 约定：分类完全由 /kb/categories 驱动，「其他」是库里 id=7 的真实分类；历史 category_id=0 的旧数据需兼容展示。
+ * 全局状态：不直接依赖 Pinia；登录 / 角色由 router.beforeEach 前端门禁保证，真正鉴权在后端。
+ */
 import { ref, computed, onMounted } from 'vue'
 import request from '../../api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -126,16 +135,28 @@ async function preview(row: any) {
   chunks.value = r.data || []
   chunksVisible.value = true
 }
+/**
+ * 批量删除选中文档（含其切片与向量）。
+ * 先二次确认，用户取消则直接返回；逐个发 DELETE 后 reload；错误由 request 拦截器统一提示。
+ */
 async function batchDelete() {
   try { await ElMessageBox.confirm('确定删除选中的 ' + sel.value.length + ' 篇文档吗？删除后相关切片和向量将一并移除。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   for (const row of sel.value) await request.delete('/kb/documents/' + row.id)
   load()
 }
+/**
+ * 拉取全部语料文档，供表格与分类筛选使用；仅在 code===200 时覆盖 docs。
+ */
 async function load() {
   const res = await request.get('/kb/documents') as any
   if (res.code === 200) docs.value = res.data || []
 }
 
+/**
+ * 上传文档并即时入库：以 FormData 携带文件、分类 id 与可选官网原文链接。
+ * 副作用：成功后清空文件 / 链接输入、重置 file input、以 msg 展示切片数并 reload 列表。
+ * 异常：接口非 200 或抛错时把后端 msg 回显到 msg，finally 复位 busy。
+ */
 async function upload() {
   if (!file.value) { msg.value = '请选择文件'; return }
   busy.value = true
@@ -160,6 +181,10 @@ async function vectorize(id: number) {
   load()
 }
 
+/**
+ * 删除单篇文档（含切片与向量）：确认后 DELETE 并 reload。
+ * 参数 row：表格当前行；取消确认则直接返回。
+ */
 async function remove(row: any) {
   try { await ElMessageBox.confirm('确定删除《' + row.fileName + '》吗？删除后相关切片和向量将一并移除。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
   await request.delete('/kb/documents/' + row.id)

@@ -1,4 +1,8 @@
 package com.campuspedia.common;
+/**
+ * 通用层：全局异常拦截，统一把异常转换为 Result 响应或 SSE 错误帧。
+ * <p>承接各 Controller 抛出的 BizException 与兜底异常，集中处理状态码与错误文案脱敏。</p>
+ */
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +23,16 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /**
+     * 处理业务异常：把错误码映射为真实 HTTP 状态并回传统一响应体。
+     * <p>SSE 响应则改为下发错误帧，副作用是直接写 response 输出流。</p>
+     *
+     * @param e        携带业务错误码与可回显文案的异常
+     * @param request  当前请求
+     * @param response 用于设置状态码或写 SSE 错误帧
+     * @return 非 SSE 时返回 Result 错误体；SSE 时返回 null
+     * @throws IOException 写 SSE 错误帧失败时抛出
+     */
     @ExceptionHandler(BizException.class)
     public Object handleBiz(BizException e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (isSse(response)) {
@@ -36,6 +50,15 @@ public class GlobalExceptionHandler {
         return Result.error(400, "请求参数格式有误");
     }
 
+    /**
+     * 兜底处理未预期异常：记录日志后统一返回 500。
+     *
+     * @param e        未捕获的异常，仅写日志不回显
+     * @param request  当前请求
+     * @param response 用于设置 500 或写 SSE 错误帧
+     * @return 非 SSE 时返回 Result 错误体；SSE 时返回 null
+     * @throws IOException 写 SSE 错误帧失败时抛出
+     */
     @ExceptionHandler(Exception.class)
     public Object handleOther(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.error("未捕获异常", e);
@@ -44,6 +67,7 @@ public class GlobalExceptionHandler {
             return null;
         }
         response.setStatus(500);
+        /** 固定文案不回显异常堆栈或内部信息，避免敏感细节外泄。 */
         return Result.error(500, "服务器内部错误，请稍后重试");
     }
 
@@ -57,6 +81,7 @@ public class GlobalExceptionHandler {
         return ct != null && ct.contains("text/event-stream");
     }
 
+    /** SSE 已建立时无法再改 HTTP 状态，只能以 event-stream 错误帧把失败告知前端。 */
     private void writeSseError(HttpServletResponse response, String msg) throws IOException {
         response.setContentType("text/event-stream;charset=UTF-8");
         String json = "{\"type\":\"error\",\"data\":\"" + escapeJson(msg) + "\"}";
@@ -64,6 +89,7 @@ public class GlobalExceptionHandler {
         response.getOutputStream().flush();
     }
 
+    /** 错误文案可能含引号或换行，转义后再拼进 SSE data 帧，避免破坏帧结构。 */
     private String escapeJson(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")

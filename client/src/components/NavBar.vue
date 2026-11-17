@@ -4,6 +4,7 @@
       <span class="logo">学</span>
       <span class="name">学事通 <i>CampusPedia</i></span>
     </div>
+    <!-- 主导航：登录态下按角色显示问答 / 个人中心 / 管理后台，激活态由当前路由决定 -->
     <div class="nav-links">
       <template v-if="auth.token">
         <el-button text :class="{ active: $route.path === '/' }" @click="$router.push('/')">
@@ -17,6 +18,7 @@
         </el-button>
       </template>
     </div>
+    <!-- 右侧操作区：日 / 夜切换、用户标识、退出；未登录时改为登录入口 -->
     <div class="nav-right">
       <template v-if="auth.token">
         <el-tooltip :content="dark ? '切换日间模式' : '切换夜间模式'" placement="bottom">
@@ -38,6 +40,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：全站顶部导航栏——品牌入口、主导航、日 / 夜切换、用户标识与退出。
+ * 所属页面：被各视图以 <NavBar /> 引入，非独立路由页面。
+ * 全局状态：useAuthStore 的 token / role 决定菜单显隐（管理员才见「管理后台」）；未登录显示登录入口。
+ * 副作用：切换 .dark 类并写入 localStorage，onMounted 时读取偏好恢复，故刷新后主题不丢失。
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChatDotRound, User, DataLine, Sunny, Moon } from '@element-plus/icons-vue'
@@ -47,6 +55,10 @@ const router = useRouter()
 const auth = useAuthStore()
 const dark = ref(false)
 
+/**
+ * 切换日 / 夜模式并持久化偏好。
+ * 副作用：给 <html> 切换 .dark 类、写 localStorage['dark']；与 onMounted 的读取恢复成对。
+ */
 function toggleDark() {
   dark.value = !dark.value
   document.documentElement.classList.toggle('dark', dark.value)

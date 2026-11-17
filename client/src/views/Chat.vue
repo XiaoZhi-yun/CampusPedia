@@ -3,6 +3,7 @@
     <NavBar />
 
     <div class="main">
+      <!-- 会话侧栏：登录后展示，集中承载新建、搜索、重命名与删除会话 -->
       <aside v-if="auth.token" class="sidebar">
         <div class="sidebar-head">
           <el-button type="primary" size="small" style="width:100%" @click="newSession">＋ 新对话</el-button>
@@ -26,6 +27,7 @@
         <div v-if="notices.length" class="notice-banner">
           <span v-for="n in notices" :key="n.id" class="notice-item">📢 <b>{{ n.title }}</b>：{{ n.content }}</span>
         </div>
+        <!-- 消息区：空态欢迎页与逐条消息；助手答案走 v-html，附操作条与参考来源 -->
         <div class="msg-list" ref="listRef">
           <div v-if="messages.length === 0" class="welcome">
             <div class="welcome-logo">通</div>
@@ -69,6 +71,7 @@
           </div>
         </div>
 
+        <!-- 输入栏：生成期间禁用输入，并把发送按钮切换为「停止」 -->
         <div class="input-bar">
           <el-input v-model="input" placeholder="输入你的校园问题…" :disabled="loading" @keyup.enter="send()" />
           <el-button v-if="loading" type="danger" @click="stop()">停止</el-button>
@@ -80,6 +83,14 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 职责：流式问答主页面——会话目录、SSE 流式答案渲染、引用来源卡片与输入交互。
+ * 所属页面：路由 '/'；支持 ?sessionId= 从个人中心直达指定会话。
+ * 依赖接口：/sessions（会话增删改查）、/sessions/:id/messages（历史消息）、
+ *           /api/chat/stream（原生 fetch 读取 SSE，因需流式而不走 request 封装）、
+ *           /stats/topQuestions（猜你想问）、/notice（顶部公告横幅）。
+ * 全局状态：useAuthStore 读取 token 与用户头像配色；路由仅用于读取 sessionId 查询参数。
+ */
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
@@ -120,6 +131,10 @@ function renderAnswer(content: string) {
     lead + text.replace(/\[(\d+)\]/g, '<span class="cite" data-idx="$1">[$1]</span>'))
 }
 
+/**
+ * 拉取当前用户的会话列表并覆盖 sessions。
+ * 未登录（无 token）时直接跳过；失败静默，侧栏允许保持空态。
+ */
 async function loadSessions() {
   if (!auth.token) return
   try { const res = await request.get('/sessions') as any; if (res.code === 200) sessions.value = res.data || [] } catch {}
@@ -131,6 +146,11 @@ async function loadNotices() {
   try { const r = await request.get('/notice') as any; if (r.code === 200) notices.value = r.data || [] } catch {}
 }
 
+/**
+ * 新建会话并切换为当前会话。
+ * 前置约束：先刷新列表，若最新会话尚无消息则提示先在当前框对话并拒绝重复建空会话。
+ * 副作用：unshift 新会话、置 currentSessionId、清空消息区；失败由 request 拦截器统一提示。
+ */
 async function newSession() {
   if (auth.token) {
     try {
@@ -153,6 +173,11 @@ async function renameSession(s: any) {
   } catch {}
 }
 
+/**
+ * 切换到指定会话并加载其历史消息。
+ * 参数 id：会话 id，来自侧栏点击或路由 ?sessionId=。
+ * 副作用：先置 currentSessionId，再把历史消息映射为渲染所需结构（助手消息经 renderAnswer 生成 html）。
+ */
 async function openSession(id: number) {
   currentSessionId.value = id
   try {
@@ -179,6 +204,14 @@ async function confirmDel(s: any) {
 
 function safeJson(s: string) { try { return JSON.parse(s) } catch { return [] } }
 
+/**
+ * 发送问题并消费 SSE 流式答案，是本页核心流程。
+ * 参数 q：可选的预置问题（猜你想问 / 重新生成）；缺省取输入框内容。
+ * 流程：无会话时先建会话；随后以原生 fetch 读取 /api/chat/stream，按空行分包、归一化 CRLF，
+ *       连接关闭时冲刷尾部残余帧；期间若切换 / 删除会话导致 aiIdx 失配则立即停止写入。
+ * 异常：非 AbortError 写入错误文案；AbortError（用户点「停止」）保留已生成内容并补占位文案。
+ * 收尾：过滤未被正文引用的来源、复位 loading 与 abortCtrl、滚动到底。
+ */
 async function send(q?: string) {
   const question = (q || input.value).trim()
   if (!question || loading.value) return
@@ -251,6 +284,9 @@ async function send(q?: string) {
   }
 }
 
+/**
+ * 用户点击「停止」：abort 当前 fetch，触发 send 的 AbortError 分支收尾，不在此额外清理状态。
+ */
 function stop() { abortCtrl?.abort() }
 
 const speaking = ref<any>(null)
@@ -285,6 +321,10 @@ function regenerate(m: any) {
 }
 
 
+/**
+ * 正文 [N] 脚注点击定位：找到第 N 条来源卡片并平滑滚动到视口中部。
+ * 参数 e：冒泡到气泡容器的点击事件；idx 越界或为 0 时回落到第一条卡片。
+ */
 function onCiteClick(e: Event) {
   const t = (e.target as HTMLElement).closest('.cite') as HTMLElement | null
   if (!t) return
@@ -329,6 +369,7 @@ function groupedSources(sources: any[]) {
     const key = s.fileName + '|' + (s.clauseRef || '')
     if (!map.has(key)) {
       const rawUrl = typeof s.sourceUrl === 'string' ? s.sourceUrl : ''
+      // 只放行 http(s) 绝对外链，拦截 javascript: 等协议，避免来源链接成为注入载体
       const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : ''
       const g = { fileName: s.fileName, clauseRef: s.clauseRef, sourceUrl: safeUrl, snippet: s.snippet, indices: [s.index] }
       map.set(key, g); groups.push(g)
