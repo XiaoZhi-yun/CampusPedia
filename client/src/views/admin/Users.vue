@@ -68,8 +68,11 @@ onMounted(load)
 </script>
 
 <style scoped>
-.admin-page { min-height: 100vh; background: #f5f6f7; }
-.topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
-.brand { font-weight: 600; }
-.content { padding: 20px; }
+.admin-page {
+  min-height: 100vh;
+  background-color: var(--cp-bg);
+  background-image: var(--cp-atmosphere);
+}
+:deep(.el-table .cell) { word-break: break-word; }
+:deep(.el-tag) { font-weight: var(--cp-fw-semi); letter-spacing: .02em; }
 </style>

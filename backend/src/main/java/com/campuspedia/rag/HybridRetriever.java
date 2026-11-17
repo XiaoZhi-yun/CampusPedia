@@ -7,6 +7,8 @@ import com.campuspedia.mapper.KbDocumentMapper;
 import com.campuspedia.service.EmbeddingService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,6 +19,8 @@ import java.util.Map;
 
 @Component
 public class HybridRetriever {
+    private static final Logger log = LoggerFactory.getLogger(HybridRetriever.class);
+
     private final PgVectorStore vectorStore;
     private final EmbeddingService embedding;
     private final DocChunkMapper chunkMapper;
@@ -42,7 +46,9 @@ public class HybridRetriever {
                 vectorRank.put(h.id(), i + 1);
                 metaById.put(h.id(), toChunk(h.id(), h.content(), h.metadataJson(), 0));
             }
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            log.warn("向量检索失败，降级为关键词检索", e);
+        }
         Map<String, Integer> keywordRank = new LinkedHashMap<>();
         if (hybridEnabled) {
             try {
@@ -52,7 +58,9 @@ public class HybridRetriever {
                     keywordRank.put(c.getVectorId(), i + 1);
                     metaById.computeIfAbsent(c.getVectorId(), vid -> buildMeta(c));
                 }
-            } catch (Exception ignore) {}
+            } catch (Exception e) {
+                log.warn("全文检索失败，降级为向量检索", e);
+            }
         }
         Map<String, Double> rrf = new HashMap<>();
         for (String id : metaById.keySet()) {
@@ -85,7 +93,9 @@ public class HybridRetriever {
             category = m.path("category").asText("");
             clauseRef = m.path("clauseRef").asText("");
             sourceUrl = m.path("sourceUrl").asText("");
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            log.warn("解析向量元数据失败: vectorId={}", vectorId, e);
+        }
         return new RetrievedChunk(vectorId, content, docId, fileName, category, clauseRef, sourceUrl, score);
     }
 

@@ -3,6 +3,7 @@ package com.campuspedia.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,15 @@ public class JwtUtil {
 
     @Value("${campus.jwt.expire-hours:24}")
     private long expireHours;
+
+    /** 启动时校验密钥，避免空/过短密钥在登录时才抛 WeakKeyException。 */
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "campus.jwt.secret 未配置或不足 32 字节：请在 .env 或 application-local.yml 中设置 JWT_SECRET");
+        }
+    }
 
     private SecretKey key() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

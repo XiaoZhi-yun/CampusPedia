@@ -52,6 +52,15 @@ onMounted(load)
 </script>
 
 <style scoped>
-.admin-page { min-height: 100vh; background: #f5f6f7; }
-.content { padding: 20px; }
+.admin-page {
+  min-height: 100vh;
+  background-color: var(--cp-bg);
+  background-image: var(--cp-atmosphere);
+}
+:deep(.el-table .cell) { word-break: break-word; }
+
+@media (max-width: 768px) {
+  /* 表单行内联宽度 280px / 400px 在窄屏溢出，仅在 CSS 层覆盖 */
+  :deep(.el-card__body .el-input) { width: 100% !important; }
+}
 </style>

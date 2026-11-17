@@ -152,18 +152,33 @@ onMounted(() => { load(); loadCats() })
 </script>
 
 <style scoped>
-.admin-page { min-height: 100vh; background: #f5f6f7; }
-.topbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
-.brand { font-weight: 600; }
-.content { padding: 20px; }
-.upload-panel { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-.upload-line { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.msg { margin-top: 8px; font-size: 13px; }
-.type-hint { margin-top: 8px; font-size: 12px; color: #999; }
-.file-name { font-size: 13px; color: #333; word-break: break-all; }
-.file-name.placeholder { color: #bbb; }
-.chunk-item { border: 1px solid #f0f0f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
-.chunk-head { font-size: 12px; color: #999; margin-bottom: 4px; }
-.chunk-head .clause { color: #c2410c; }
-.chunk-body { font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+.admin-page {
+  min-height: 100vh;
+  background-color: var(--cp-bg);
+  background-image: var(--cp-atmosphere);
+}
+.upload-panel { margin-top: var(--cp-sp-4); display: flex; flex-direction: column; gap: var(--cp-sp-3); }
+.upload-line { display: flex; align-items: center; gap: var(--cp-sp-3); flex-wrap: wrap; }
+.file-name { font-size: var(--cp-fs-sm); color: var(--cp-text-2); word-break: break-all; }
+.file-name.placeholder { color: var(--cp-text-3); }
+.type-hint { margin: var(--cp-sp-3) 0 0; font-size: var(--cp-fs-xs); color: var(--cp-text-3); }
+.chunk-item {
+  border: 1px solid var(--cp-border);
+  border-radius: var(--cp-r-sm);
+  padding: var(--cp-sp-3);
+  margin-bottom: var(--cp-sp-2);
+  background: var(--cp-card-bg);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.chunk-head { font-size: var(--cp-fs-xs); color: var(--cp-text-3); margin-bottom: var(--cp-sp-2); font-variant-numeric: tabular-nums; }
+.chunk-head .clause { color: var(--cp-emphasis); margin-left: var(--cp-sp-1); }
+.chunk-body { font-size: var(--cp-fs-sm); line-height: var(--cp-lh-body); white-space: pre-wrap; color: var(--cp-text-2); word-break: break-word; }
+:deep(.el-dialog__body) { max-height: 65vh; overflow-y: auto; }
+
+@media (max-width: 768px) {
+  /* 模板内联宽度在窄屏会溢出，仅在 CSS 层覆盖，不动 template */
+  .upload-line :deep(.el-select), .upload-line :deep(.el-input) { width: 100% !important; }
+  .upload-line > :deep(.el-button) { flex: 1 1 auto; }
+}
 </style>

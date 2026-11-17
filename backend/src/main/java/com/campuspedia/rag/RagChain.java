@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class RagChain {
@@ -52,6 +53,8 @@ public class RagChain {
     }
 
     public void stream(String question, List<String> history, Long sessionId, Long userId, SseEmitter emitter) {
+        // 客户端断开后立刻停止生成与落库，避免继续消耗 LLM token 并写入用户已「停止」的答案
+        AtomicBoolean alive = new AtomicBoolean(true);
         try {
             int topKRecall = configService.getInt("rag_top_k_recall", 20);
             int topNFinal = configService.getInt("rag_top_n_final", 5);
@@ -64,11 +67,12 @@ public class RagChain {
             String rewriteQuery = rewriteEnabled ? queryRewriter.rewrite(question, history) : question;
 
             if (isGreeting(question)) {
-                emit(emitter, "sources", List.of());
-                emit(emitter, "trace", Map.of("note", "问候语，无需检索"));
+                emit(emitter, "sources", List.of(), alive);
+                emit(emitter, "trace", Map.of("note", "问候语，无需检索"), alive);
                 StringBuilder greet = new StringBuilder();
-                llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。", delta -> { greet.append(delta); emit(emitter, "delta", delta); });
-                emit(emitter, "done", null);
+                llmService.stream(systemPrompt, "用户打了个招呼，请简短友好地回应，不超过一句话。",
+                        delta -> { greet.append(delta); emit(emitter, "delta", delta, alive); });
+                emit(emitter, "done", null, alive);
                 emitter.complete();
                 saveMessage(sessionId, userId, question, question, greet.toString(), List.of());
                 return;
@@ -92,25 +96,32 @@ public class RagChain {
             List<Map<String, Object>> sources = buildSources(finalHits);
             String userPrompt = buildUserPrompt(question, finalHits);
 
-            emit(emitter, "sources", sources);
+            emit(emitter, "sources", sources, alive);
             emit(emitter, "trace", Map.of(
                     "rewriteQuery", rewriteQuery,
                     "candidateCount", candidates.size(),
                     "finalCount", finalHits.size(),
-                    "threshold", threshold));
+                    "threshold", threshold), alive);
 
             StringBuilder answer = new StringBuilder();
             llmService.stream(systemPrompt, userPrompt, delta -> {
                 answer.append(delta);
-                emit(emitter, "delta", delta);
+                emit(emitter, "delta", delta, alive);
             });
 
-            emit(emitter, "done", null);
+            emit(emitter, "done", null, alive);
             emitter.complete();
             saveMessage(sessionId, userId, question, rewriteQuery, answer.toString(), sources);
         } catch (Exception e) {
-            emit(emitter, "error", e.getMessage());
-            emitter.complete();
+            if (alive.get()) {
+                try {
+                    emit(emitter, "error", "生成失败，请稍后重试", alive);
+                    emitter.complete();
+                } catch (Exception ignored) {
+                    // 连接已断，无需再推送
+                }
+                log.warn("RAG 链路异常", e);
+            }
         }
     }
 
@@ -140,11 +151,16 @@ public class RagChain {
             s.put("clauseRef", c.clauseRef());
             String snip = c.content();
             s.put("snippet", snip.length() > 180 ? snip.substring(0, 180) + "..." : snip);
-            s.put("sourceUrl", c.sourceUrl());
+            s.put("sourceUrl", safeUrl(c.sourceUrl()));
             s.put("score", Math.round(c.score() * 10000) / 10000.0);
             sources.add(s);
         }
         return sources;
+    }
+
+    /** 来源链接只允许 http/https，阻断 javascript: 等协议。 */
+    private String safeUrl(String url) {
+        return url != null && url.matches("(?i)^https?://.*") ? url : "";
     }
 
     private String buildUserPrompt(String question, List<RetrievedChunk> hits) {
@@ -178,31 +194,41 @@ public class RagChain {
                     session.setMessageCount((session.getMessageCount() == null ? 0 : session.getMessageCount()) + 2);
                     sessionMapper.updateById(session);
                 }
-            } catch (Exception ignore) {}
+            } catch (Exception e) {
+                log.warn("更新会话标题失败: sessionId={}", sessionId, e);
+            }
         }
         try {
             ChatMessage m = new ChatMessage();
             m.setSessionId(sessionId == null ? 0L : sessionId);
-            m.setUserId(userId == null ? 0L : userId);
+            m.setUserId(userId);
             m.setRole("user");
             m.setContent(question);
             m.setRetrieveQuery(rewriteQuery);
             messageMapper.insert(m);
             ChatMessage a = new ChatMessage();
             a.setSessionId(sessionId == null ? 0L : sessionId);
-            a.setUserId(userId == null ? 0L : userId);
+            a.setUserId(userId);
             a.setRole("assistant");
             a.setContent(answer);
             a.setSources(objectMapper.writeValueAsString(sources));
             a.setHitCount(sources.size());
             messageMapper.insert(a);
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            log.warn("保存问答消息失败: sessionId={}, userId={}", sessionId, userId, e);
+        }
     }
 
-    private void emit(SseEmitter emitter, String type, Object data) {
+    private void emit(SseEmitter emitter, String type, Object data, AtomicBoolean alive) {
+        if (!alive.get()) throw new IllegalStateException("客户端已断开");
         Map<String, Object> m = new HashMap<>();
         m.put("type", type);
         if (data != null) m.put("data", data);
-        try { emitter.send(SseEmitter.event().data(m)); } catch (IOException ignored) {}
+        try {
+            emitter.send(SseEmitter.event().data(m));
+        } catch (IOException e) {
+            alive.set(false);
+            throw new IllegalStateException("客户端已断开", e);
+        }
     }
 }

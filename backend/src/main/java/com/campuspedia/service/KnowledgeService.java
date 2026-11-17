@@ -9,8 +9,11 @@ import com.campuspedia.rag.DocumentLoader;
 import com.campuspedia.rag.PgVectorStore;
 import com.campuspedia.rag.RecursiveSplitter;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +26,8 @@ import java.util.UUID;
 
 @Service
 public class KnowledgeService {
+    private static final Logger log = LoggerFactory.getLogger(KnowledgeService.class);
+
     private final KbDocumentMapper documentMapper;
     private final DocChunkMapper chunkMapper;
     private final DocumentLoader loader;
@@ -49,10 +54,11 @@ public class KnowledgeService {
     }
 
     public KbDocument upload(String fileName, byte[] bytes, Long categoryId, String sourceUrl) {
-        String filePath = saveFile(fileName, bytes);
+        String safeName = sanitizeFileName(fileName);
+        String filePath = saveFile(safeName, bytes);
         KbDocument doc = new KbDocument();
-        doc.setFileName(fileName);
-        doc.setFileType(ext(fileName));
+        doc.setFileName(safeName);
+        doc.setFileType(ext(safeName));
         doc.setFileSize(bytes.length);
         doc.setFilePath(filePath);
         doc.setSourceUrl(sourceUrl == null ? "" : sourceUrl);
@@ -112,32 +118,66 @@ public class KnowledgeService {
         } catch (Exception e) {
             doc.setVectorStatus("fail");
             documentMapper.updateById(doc);
+            log.error("语料向量化失败: documentId={}", documentId, e);
             throw new BizException("向量化失败：" + e.getMessage());
         }
     }
 
     public List<KbDocument> list() { return documentMapper.selectList(null); }
 
+    /** 级联删除；MySQL 侧由事务保证原子，向量库/文件失败保留容错但必须留日志。 */
+    @Transactional
     public void delete(Long documentId) {
         KbDocument doc = documentMapper.selectById(documentId);
-        try { chunkMapper.delete(new QueryWrapper<DocChunk>().eq("document_id", documentId)); } catch (Exception ignore) {}
-        try { vectorStore.removeByDocument(String.valueOf(documentId)); } catch (Exception ignore) {}
+        try {
+            chunkMapper.delete(new QueryWrapper<DocChunk>().eq("document_id", documentId));
+        } catch (Exception e) {
+            log.warn("删除切片失败，可能残留数据: documentId={}", documentId, e);
+        }
+        try {
+            vectorStore.removeByDocument(String.valueOf(documentId));
+        } catch (Exception e) {
+            log.warn("删除向量失败，可能残留数据: documentId={}", documentId, e);
+        }
         documentMapper.deleteById(documentId);
         if (doc != null && doc.getFilePath() != null) {
-            try { Files.deleteIfExists(Paths.get(doc.getFilePath())); } catch (Exception ignore) {}
+            try {
+                Files.deleteIfExists(Paths.get(doc.getFilePath()));
+            } catch (Exception e) {
+                log.warn("删除原始文件失败: {}", doc.getFilePath(), e);
+            }
         }
-        try { Long maxId = documentMapper.selectMaxId(); documentMapper.resetAutoIncrement((maxId == null ? 0 : maxId) + 1); } catch (Exception ignore) {}
+    }
+
+    /** 去掉目录与非法字符，防止上传文件名路径穿越覆盖项目文件。 */
+    private String sanitizeFileName(String fileName) {
+        String raw = fileName == null ? "" : fileName.replace('\\', '/');
+        String base;
+        try {
+            base = Paths.get(raw).getFileName().toString();
+        } catch (Exception e) {
+            base = "upload.bin";
+        }
+        String safe = base.replaceAll("[^a-zA-Z0-9._\\-\\u4e00-\\u9fa5]", "_");
+        if (safe.isBlank() || ".".equals(safe) || "..".equals(safe)) safe = "upload.bin";
+        if (safe.length() > 120) safe = safe.substring(safe.length() - 120);
+        return safe;
     }
 
     private String saveFile(String fileName, byte[] bytes) {
         try {
-            Path dir = Paths.get(storagePath, "original");
+            Path dir = Paths.get(storagePath, "original").toAbsolutePath().normalize();
             Files.createDirectories(dir);
             String saved = UUID.randomUUID() + "_" + fileName;
-            Path p = dir.resolve(saved);
+            Path p = dir.resolve(saved).normalize();
+            if (!p.startsWith(dir)) throw new BizException("非法文件名");
             Files.write(p, bytes);
             return p.toString();
-        } catch (Exception e) { throw new BizException("文件保存失败：" + e.getMessage()); }
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BizException("文件保存失败：" + e.getMessage());
+        }
     }
 
     private String ext(String fileName) {

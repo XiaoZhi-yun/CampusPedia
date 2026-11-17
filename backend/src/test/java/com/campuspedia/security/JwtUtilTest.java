@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * JwtUtil 单元测试：签发/解析往返、篡改失效、过期失效。
+ * JwtUtil 单元测试：签发/解析往返、篡改失效、过期失效、空密钥启动即失败。
  */
 class JwtUtilTest {
 
@@ -47,5 +47,12 @@ class JwtUtilTest {
         JwtUtil u = newUtil(-1);
         String token = u.generate(1L, "张三", "user");
         assertThrows(Exception.class, () -> u.parse(token));
+    }
+
+    /** 回归：未配置 JWT_SECRET 时启动即报错，而不是登录时才抛 WeakKeyException。 */
+    @Test
+    void blankSecretFailsFast() {
+        JwtUtil u = new JwtUtil();
+        assertThrows(IllegalStateException.class, u::validateSecret);
     }
 }

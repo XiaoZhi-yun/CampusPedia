@@ -33,6 +33,9 @@ public class DashScopeEmbeddingService implements EmbeddingService {
     @Value("${campus.embedding.model}")
     private String model;
 
+    @Value("${campus.embedding.dimensions:1024}")
+    private int configuredDimension = 1024;
+
     /** 实际维度在首次成功调用后确定。 */
     private volatile int dimension = -1;
 
@@ -71,6 +74,6 @@ public class DashScopeEmbeddingService implements EmbeddingService {
 
     @Override
     public int dimension() {
-        return dimension > 0 ? dimension : 1024;
+        return dimension > 0 ? dimension : configuredDimension;
     }
 }

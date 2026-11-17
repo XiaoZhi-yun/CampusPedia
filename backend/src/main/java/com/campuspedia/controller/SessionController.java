@@ -9,6 +9,7 @@ import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.security.AuthHelper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +35,14 @@ public class SessionController {
         return userId;
     }
 
+    /** 校验会话归属，防止越权读取、改名或删除他人会话。 */
+    private ChatSession ownedSession(Long id, Long userId) {
+        ChatSession s = sessionMapper.selectById(id);
+        if (s == null) throw new BizException("会话不存在");
+        if (!userId.equals(s.getUserId())) throw new BizException(403, "无权访问该会话");
+        return s;
+    }
+
     @GetMapping
     public Result<List<ChatSession>> list(HttpServletRequest request) {
         Long userId = uid(request);
@@ -53,23 +62,22 @@ public class SessionController {
 
     @GetMapping("/{id}/messages")
     public Result<List<ChatMessage>> messages(@PathVariable Long id, HttpServletRequest request) {
-        uid(request);
+        ownedSession(id, uid(request));
         return Result.ok(messageMapper.selectList(new QueryWrapper<ChatMessage>().eq("session_id", id).orderByAsc("id")));
     }
 
     @PutMapping("/{id}")
     public Result<Void> rename(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
-        uid(request);
-        ChatSession s = sessionMapper.selectById(id);
-        if (s == null) throw new BizException("会话不存在");
+        ChatSession s = ownedSession(id, uid(request));
         if (body.get("title") != null && !body.get("title").isBlank()) s.setTitle(body.get("title"));
         sessionMapper.updateById(s);
         return Result.ok(null);
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest request) {
-        uid(request);
+        ownedSession(id, uid(request));
         messageMapper.delete(new QueryWrapper<ChatMessage>().eq("session_id", id));
         sessionMapper.deleteById(id);
         return Result.ok(null);

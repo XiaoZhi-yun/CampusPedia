@@ -44,7 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/stats/topQuestions").authenticated()
                         .requestMatchers("/api/config/**", "/api/kb/**", "/api/stats/**", "/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/sessions/**", "/api/profile/**").authenticated()
-                        .anyRequest().permitAll());
+                        .requestMatchers("/error").permitAll()
+                        .anyRequest().authenticated());
         return http.build();
     }
 }

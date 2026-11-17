@@ -1,6 +1,11 @@
 package com.campuspedia.security;
 
+import com.campuspedia.common.BizException;
+import com.campuspedia.controller.SessionController;
+import com.campuspedia.entity.ChatSession;
 import com.campuspedia.entity.User;
+import com.campuspedia.mapper.ChatMessageMapper;
+import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.mapper.UserMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -14,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * JwtAuthenticationFilter 单测：有效 token、禁用用户、无 token 三种场景。
+ * 安全相关单测：JwtAuthenticationFilter 三种场景，以及会话归属（越权）校验回归。
  */
 class JwtAuthenticationFilterTest {
 
@@ -88,5 +93,25 @@ class JwtAuthenticationFilterTest {
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain).doFilter(req, resp);
+    }
+
+    /** 回归：登录用户不能读取他人会话消息，避免 IDOR。 */
+    @Test
+    void sessionOwnershipRejectsOtherUser() {
+        ChatSessionMapper sessionMapper = mock(ChatSessionMapper.class);
+        ChatMessageMapper messageMapper = mock(ChatMessageMapper.class);
+        AuthHelper authHelper = mock(AuthHelper.class);
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        when(authHelper.currentUserId(req)).thenReturn(1L);
+
+        ChatSession other = new ChatSession();
+        other.setId(9L);
+        other.setUserId(2L);
+        when(sessionMapper.selectById(9L)).thenReturn(other);
+
+        SessionController controller = new SessionController(sessionMapper, messageMapper, authHelper);
+        BizException ex = assertThrows(BizException.class, () -> controller.messages(9L, req));
+        assertEquals(403, ex.getCode());
+        verifyNoInteractions(messageMapper);
     }
 }

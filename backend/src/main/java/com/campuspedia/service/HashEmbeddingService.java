@@ -1,5 +1,6 @@
 package com.campuspedia.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +14,9 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "campus.embedding.provider", havingValue = "hash", matchIfMissing = true)
 public class HashEmbeddingService implements EmbeddingService {
 
-    /** 向量维度（与后续千问 embedding 维度解耦，通过接口约束）。 */
-    private final int dimension = 128;
+    /** 维度必须与 sql/init_pgvector.sql 的 vector(1024) 列定义一致，否则写入会被 pgvector 拒绝。 */
+    @Value("${campus.embedding.dimensions:1024}")
+    private int dimension = 1024;
 
     @Override
     public int dimension() {

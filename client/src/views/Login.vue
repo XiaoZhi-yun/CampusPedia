@@ -36,7 +36,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { User, Lock, UserFilled, Reading, School } from '@element-plus/icons-vue'
 import request from '../api/request'
 import { useAuthStore } from '../stores/auth'
@@ -65,8 +64,7 @@ async function login() {
   try {
     const res = await request.post('/auth/login', loginForm) as any
     if (res.code === 200) { auth.setLogin(res.data); router.push('/') }
-    else ElMessage.error(res.msg || '登录失败')
-  } catch (e: any) { ElMessage.error(e?.response?.data?.msg || '登录失败') }
+  } catch { /* 错误已由请求拦截器统一提示 */ }
   finally { loading.value = false }
 }
 
@@ -76,8 +74,7 @@ async function register() {
   try {
     const res = await request.post('/auth/register', regForm) as any
     if (res.code === 200) { auth.setLogin(res.data); router.push('/') }
-    else ElMessage.error(res.msg || '注册失败')
-  } catch (e: any) { ElMessage.error(e?.response?.data?.msg || '注册失败') }
+  } catch { /* 错误已由请求拦截器统一提示 */ }
   finally { loading.value = false }
 }
 </script>
@@ -89,30 +86,137 @@ async function register() {
   align-items: center;
   justify-content: center;
   position: relative;
-  background: #7c2d12 url('https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1600&q=80') center / cover no-repeat;
+  padding: var(--cp-sp-4);
+  background: var(--cp-login-bg);
+  overflow: hidden;
+  isolation: isolate;
 }
+
+/* 恢复原大屏背景后的遮罩层：深色渐隐 + 细网格，保证卡片文字清晰 */
 .login-wrap::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(40, 20, 5, .45), rgba(40, 20, 5, .62));
+  background-image:
+    radial-gradient(130% 100% at 50% 42%, transparent 30%, rgba(12, 10, 8, .42) 82%, rgba(12, 10, 8, .62) 100%),
+    linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px),
+    var(--cp-login-veil);
+  background-size: auto, 34px 34px, 34px 34px, auto;
+  pointer-events: none;
 }
-.login-card { position: relative; z-index: 1; width: 400px; border-radius: 16px; box-shadow: 0 18px 48px rgba(0, 0, 0, .18); }
-.login-card :deep(.el-card__body) { padding: 28px 28px 20px; }
+
+/* 双色光晕 + 斜向柔光带，仅用 transform 做缓慢漂移，制造纵深 */
+.login-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(46rem 30rem at 14% 86%, rgba(234, 88, 12, .40), transparent 66%),
+    radial-gradient(40rem 28rem at 88% 10%, rgba(66, 122, 178, .32), transparent 62%),
+    linear-gradient(115deg, transparent 44%, rgba(255, 255, 255, .10) 50%, transparent 56%);
+  filter: blur(20px);
+  animation: cp-glow-drift 18s var(--cp-ease) infinite alternate;
+  pointer-events: none;
+}
+@keyframes cp-glow-drift {
+  from { transform: translate3d(-3%, 2%, 0) scale(1); }
+  to   { transform: translate3d(3%, -2%, 0) scale(1.08); }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 420px;
+  max-width: 100%;
+  background: var(--cp-login-card-bg) !important;
+  backdrop-filter: blur(16px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: var(--cp-r-lg);
+  box-shadow: var(--cp-shadow-3), 0 0 0 1px rgba(255, 255, 255, .45),
+              0 20px 80px rgba(234, 88, 12, .22), inset 0 1px 0 rgba(255, 255, 255, .90);
+  overflow: hidden;
+  animation: cp-card-in var(--cp-dur-slow) var(--cp-ease) both;
+}
+@keyframes cp-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.login-card :deep(.el-card__body) { padding: var(--cp-sp-6) var(--cp-sp-6) var(--cp-sp-5); }
+
+/* 品牌区错峰入场，只动 opacity / transform */
 .brand { text-align: center; }
+.brand > * { animation: cp-rise var(--cp-dur-slow) var(--cp-ease) both; }
+.brand > :nth-child(1) { animation-delay: 120ms; }
+.brand > :nth-child(2) { animation-delay: 200ms; }
+.brand > :nth-child(3) { animation-delay: 280ms; }
 .brand-logo {
+  position: relative;
+  z-index: 0;
   width: 56px;
   height: 56px;
-  margin: 0 auto 10px;
-  border-radius: 16px;
-  background: #ea580c;
-  color: #fff;
-  font-size: 28px;
-  font-weight: 700;
+  margin: 0 auto var(--cp-sp-3);
+  border-radius: var(--cp-r-md);
+  background: var(--cp-accent);
+  color: var(--cp-on-accent);
+  font-family: var(--cp-font-display);
+  font-size: var(--cp-fs-2xl);
+  font-weight: var(--cp-fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--cp-shadow-2);
 }
-h2 { margin: 0 0 4px; text-align: center; }
-.sub { color: #999; margin: 0 0 16px; font-size: 13px; text-align: center; }
+.brand-logo::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  border-radius: var(--cp-r-lg);
+  background: radial-gradient(circle, rgba(234, 88, 12, .48), transparent 70%);
+  animation: cp-logo-breathe 3.2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes cp-logo-breathe {
+  from { opacity: .35; transform: scale(.9); }
+  to   { opacity: .8; transform: scale(1.12); }
+}
+h2 {
+  margin: 0 0 var(--cp-sp-1);
+  text-align: center;
+  font-family: var(--cp-font-display);
+  font-size: var(--cp-fs-lg);
+  font-weight: var(--cp-fw-bold);
+  color: var(--cp-text-1);
+  letter-spacing: .03em;
+}
+.sub { color: var(--cp-text-3); margin: 0 0 var(--cp-sp-5); font-size: var(--cp-fs-sm); text-align: center; letter-spacing: .08em; }
+
+/* 单层输入框：透明底 + 唯一一层 1px 描边，聚焦只换色，不叠加高亮容器 */
+.login-card :deep(.el-input__wrapper),
+.login-card :deep(.el-input__wrapper:hover) {
+  background-color: transparent;
+  box-shadow: 0 0 0 1px var(--cp-border-strong) inset;
+}
+.login-card :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--cp-accent) inset;
+}
+.login-card :deep(.el-tabs__active-bar) {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--cp-accent), var(--cp-accent-deep));
+}
+.login-card :deep(.el-button--primary) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 55%);
+  box-shadow: var(--cp-shadow-2);
+}
+.login-card :deep(.el-tabs__item) { font-size: var(--cp-fs-md); }
+.login-card :deep(.el-tabs__nav-wrap) { margin-bottom: var(--cp-sp-4); }
+.login-card :deep(.el-form-item) { margin-bottom: var(--cp-sp-4); }
+.login-card :deep(.el-button--large) { height: 44px; font-size: var(--cp-fs-md); }
+
+@media (max-width: 480px) {
+  .login-card :deep(.el-card__body) { padding: var(--cp-sp-5) var(--cp-sp-4) var(--cp-sp-4); }
+  .brand-logo { width: 48px; height: 48px; font-size: var(--cp-fs-xl); }
+}
 </style>

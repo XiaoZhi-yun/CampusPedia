@@ -9,6 +9,7 @@ import com.campuspedia.mapper.ChatMessageMapper;
 import com.campuspedia.mapper.ChatSessionMapper;
 import com.campuspedia.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,6 +47,7 @@ public class UserController {
         return Result.ok(null);
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         User u = userMapper.selectById(id);
